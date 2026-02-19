@@ -34,6 +34,7 @@ export interface Card {
 }
 
 export interface Order {
+    _id?: string;
     id: string;
     userId: string;
     cardId: string;

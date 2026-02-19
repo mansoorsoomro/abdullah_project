@@ -5,12 +5,16 @@ import { sendApprovalEmail } from '../../../../lib/emailService';
 
 export async function POST(req: NextRequest) {
     try {
-        await connectDB();
-        const { trxId } = await req.json();
+        const body = await req.json();
+        const { trxId } = body;
+
+        console.log("Received approval request for:", trxId); // Debug log
 
         if (!trxId) {
-            return NextResponse.json({ error: 'TRX ID is required' }, { status: 400 });
+            return NextResponse.json({ error: 'TRX ID is missing from request body' }, { status: 400 });
         }
+
+        await connectDB();
 
         const payment = await Payment.findOne({ trxId });
         if (!payment) {
@@ -44,17 +48,33 @@ export async function POST(req: NextRequest) {
             });
         } else {
             // SIGNUP type
-            const user = await User.findOne({ trxId: trxId });
+            const user = await User.findOne({ trxId });
 
-            if (user) {
-                user.status = 'APPROVED';
-                if (!user.accountExpiresAt) {
-                    user.accountExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            if (!user) {
+                console.warn('User not found for signup approval:', trxId);
+                // We proceed to approve the payment even if user is missing, or return error?
+                // If this is a signup payment, there SHOULD be a user. 
+                // But let's avoid crashing.
+                return NextResponse.json({ error: 'User link missing for this signup' }, { status: 404 });
+            }
+
+            user.status = 'APPROVED';
+            // Set expiry if not set
+            if (!user.accountExpiresAt) {
+                const expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + 30);
+                user.accountExpiresAt = expiryDate;
+            }
+
+            await user.save();
+
+            // Send email
+            try {
+                if (user.email && user.username) {
+                    await sendApprovalEmail(user.email, user.username);
                 }
-                await user.save();
-
-                // Send email
-                await sendApprovalEmail(user.email, user.username).catch(e => console.error('Email failed:', e));
+            } catch (emailError) {
+                console.error('Email failed but user approved:', emailError);
             }
 
             payment.status = 'APPROVED';
@@ -67,6 +87,38 @@ export async function POST(req: NextRequest) {
         }
     } catch (error) {
         console.error('Approve error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { trxId } = body;
+
+        await connectDB();
+
+        if (!trxId) {
+            return NextResponse.json({ error: 'TRX ID is required' }, { status: 400 });
+        }
+
+        // Find the payment
+        const payment = await Payment.findOne({ trxId });
+
+        if (!payment) {
+            return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
+        }
+
+        // If it's a signup payment, we might want to delete the user too or set them to rejected
+        if (payment.type === 'SIGNUP') {
+            await User.deleteOne({ trxId });
+        }
+
+        await Payment.deleteOne({ trxId });
+
+        return NextResponse.json({ success: true, message: 'Payment rejected and deleted' });
+    } catch (error) {
+        console.error('Reject error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
