@@ -29,7 +29,7 @@ export default function AdminLogin() {
             const data = await response.json();
 
             if (response.ok) {
-                // Store admin session
+               
                 localStorage.setItem('adminAuth', 'true');
                 router.push('/admin/dashboard');
             } else {
