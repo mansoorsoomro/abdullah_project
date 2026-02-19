@@ -82,7 +82,7 @@ function SignupForm() {
             if (response.ok) {
                 localStorage.removeItem('pendingTrxId');
 
-                // Show success toast
+        
                 toast.success('Congratulations! Account created successfully.', {
                     description: 'We will notify you via email when your account is approved.',
                     duration: 5000,
