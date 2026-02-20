@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../../../lib/db';
 import { User, ActivityLog } from '../../../../../../lib/models'; // Added ActivityLog
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const user = await User.findById(id).select('-password');
 
         if (!user) {

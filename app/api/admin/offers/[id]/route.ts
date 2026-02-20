@@ -3,9 +3,10 @@ import { connectDB } from '../../../../../lib/db';
 import { Offer } from '../../../../../lib/models';
 
 // PUT /api/admin/offers/[id] — update
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
+        const { id } = await params;
         const body = await req.json();
         const { title, description, cardCount, discount, originalPrice, price, badge, isActive, styleIndex } = body;
 
@@ -14,7 +15,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
             : undefined;
 
         const updated = await Offer.findByIdAndUpdate(
-            params.id,
+            id,
             {
                 ...(title !== undefined && { title }),
                 ...(description !== undefined && { description }),
@@ -38,10 +39,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 }
 
 // DELETE /api/admin/offers/[id] — delete
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const deleted = await Offer.findByIdAndDelete(params.id);
+        const { id } = await params;
+        const deleted = await Offer.findByIdAndDelete(id);
         if (!deleted) return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
         return NextResponse.json({ success: true });
     } catch (err: any) {

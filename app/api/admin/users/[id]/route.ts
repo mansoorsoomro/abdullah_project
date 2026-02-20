@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db';
 import { User } from '../../../../../lib/models';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const body = await req.json();
 
         // Exclude sensitive fields from direct update if necessary, or trust admin
@@ -28,10 +28,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
 
         const deletedUser = await User.findByIdAndDelete(id);
 

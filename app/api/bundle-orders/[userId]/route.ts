@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db';
 import { BundleOrder } from '../../../../lib/models';
 
-export async function GET(req: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
         await connectDB();
 
-        const { userId } = params;
+        const { userId } = await params;
         const { searchParams } = new URL(req.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
