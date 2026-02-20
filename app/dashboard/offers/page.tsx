@@ -152,18 +152,47 @@ export default function OffersPage() {
                 </div>
             )}
 
-            {/* No offers state */}
+            {/* ── No Offers State ── */}
             {!error && offers.length === 0 && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex flex-col items-center justify-center py-20 border border-dashed border-gray-800 rounded-xl bg-black/50"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative flex flex-col items-center justify-center py-24 px-8 rounded-2xl border border-dashed border-gray-800 bg-[#080808] overflow-hidden"
                 >
-                    <PackageX className="w-16 h-16 text-gray-700 mb-4" />
-                    <p className="text-gray-500 font-mono text-sm tracking-widest">NO BUNDLE OFFERS AVAILABLE</p>
-                    <p className="text-gray-700 text-xs font-mono mt-2">Not enough cards in market to form bundles</p>
+                    {/* Background glow orb */}
+                    <div className="absolute w-72 h-72 rounded-full blur-[120px] opacity-10 pointer-events-none"
+                        style={{ background: 'var(--accent)' }} />
+
+                    {/* Animated outer ring */}
+                    <div className="relative mb-8">
+                        <div className="w-24 h-24 rounded-full border border-gray-800 flex items-center justify-center">
+                            <div className="w-16 h-16 rounded-full border border-gray-700 flex items-center justify-center bg-[#0d0d0d]">
+                                <PackageX className="w-7 h-7 text-gray-600" />
+                            </div>
+                        </div>
+                        {/* Pulsing ring */}
+                        <div className="absolute inset-0 rounded-full border border-gray-700/40 animate-ping opacity-30" />
+                    </div>
+
+                    {/* Text */}
+                    <h3 className="text-2xl font-black text-gray-500 tracking-[0.15em] uppercase mb-3">
+                        NO OFFERS AVAILABLE
+                    </h3>
+                    <p className="text-gray-700 font-mono text-sm text-center max-w-sm leading-relaxed mb-6">
+                        No bundle offers have been published yet.<br />
+                        Check back later — exclusive deals drop regularly.
+                    </p>
+
+                    {/* Decorative dashes */}
+                    <div className="flex items-center gap-3 text-gray-800">
+                        <div className="h-px w-12 bg-gray-800" />
+                        <span className="text-[10px] font-mono tracking-[0.25em] text-gray-700 uppercase">Awaiting admin offers</span>
+                        <div className="h-px w-12 bg-gray-800" />
+                    </div>
                 </motion.div>
             )}
+
 
             {/* Offers Grid */}
             {offers.length > 0 && (
