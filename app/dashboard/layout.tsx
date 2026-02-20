@@ -7,6 +7,8 @@ import Image from 'next/image';
 import type { User } from '../../types';
 import { DashboardContext } from './DashboardContext';
 import GridBackground from '../theme/GridBackgroundstub';
+import { NotificationToast } from '../components/NotificationToast';
+
 
 export default function DashboardLayout({
     children,
@@ -25,7 +27,8 @@ export default function DashboardLayout({
     const [copied, setCopied] = useState(false);
 
     // Notification State
-    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info'; id?: number } | null>(null);
+
 
     const router = useRouter();
     const pathname = usePathname();
@@ -128,9 +131,10 @@ export default function DashboardLayout({
     const openDepositModal = () => setShowDeposit(true);
     const closeDepositModal = () => setShowDeposit(false);
     const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification(null), 3000);
+        setNotification({ message, type, id: Date.now() });
+        setTimeout(() => setNotification(null), 3500);
     };
+
 
     if (!user) {
         return (
@@ -188,62 +192,12 @@ export default function DashboardLayout({
 
                 {/* Content wrapper with relative positioning */}
                 <div className="relative z-10">
-                    {/* Notification Toast - High Visibility Center Pop */}
-                    <AnimatePresence>
-                        {notification && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -50, x: '-50%' }}
-                                animate={{ opacity: 1, y: 0, x: '-50%' }}
-                                exit={{ opacity: 0, y: -50, x: '-50%' }}
-                                className={`fixed top-6 left-1/2 z-9999 min-w-[320px] md:min-w-[400px] p-0 rounded-lg shadow-2xl backdrop-blur-xl border flex flex-col overflow-hidden ${notification.type === 'success' ? 'bg-black/90 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]' :
-                                    notification.type === 'error' ? 'bg-black/90 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]' :
-                                        'bg-black/90 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4 p-5 relative">
-                                    {/* Icon Box */}
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold border ${notification.type === 'success' ? 'bg-green-500/10 border-green-500 text-green-500' :
-                                        notification.type === 'error' ? 'bg-red-500/10 border-red-500 text-red-500' :
-                                            'bg-blue-500/10 border-blue-500 text-blue-500'
-                                        }`}>
-                                        {notification.type === 'success' ? '✓' : notification.type === 'error' ? '!' : 'i'}
-                                    </div>
-
-                                    {/* Message */}
-                                    <div className="flex-1">
-                                        <h4 className={`text-xs font-black tracking-widest mb-1 ${notification.type === 'success' ? 'text-green-500' :
-                                            notification.type === 'error' ? 'text-red-500' :
-                                                'text-blue-500'
-                                            }`}>
-                                            {notification.type === 'success' ? 'TRANSACTION SUCCESS' : notification.type === 'error' ? 'TRANSACTION ERROR' : 'NOTIFICATION'}
-                                        </h4>
-                                        <p className="text-sm font-bold text-white tracking-wide leading-tight">
-                                            {notification.message}
-                                        </p>
-                                    </div>
-
-                                    {/* Close Button */}
-                                    <button
-                                        onClick={() => setNotification(null)}
-                                        className="text-gray-500 hover:text-white transition-colors"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                {/* Progress Bar Animation */}
-                                <motion.div
-                                    initial={{ width: "100%" }}
-                                    animate={{ width: "0%" }}
-                                    transition={{ duration: 3, ease: "linear" }}
-                                    className={`h-1 w-full ${notification.type === 'success' ? 'bg-green-500' :
-                                        notification.type === 'error' ? 'bg-red-500' :
-                                            'bg-blue-500'
-                                        }`}
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {/* ── Premium Notification Toast ── */}
+                    <NotificationToast
+                        notification={notification}
+                        onClose={() => setNotification(null)}
+                        duration={3500}
+                    />
 
                     {/* Header */}
                     <motion.header
@@ -337,6 +291,16 @@ export default function DashboardLayout({
                                 >
                                     <span className="block skew-x-15 group-hover:scale-105 transition-transform relative z-10">MY ORDERS</span>
                                     {isActive('/dashboard/orders') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
+                                </button>
+                                <button
+                                    onClick={() => router.push('/dashboard/offers')}
+                                    className={`relative px-12 md:px-16 py-3 mx-4 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 group ${isActive('/dashboard/offers')
+                                        ? 'bg-(--accent) text-black border-(--accent) shadow-[0_0_25px_var(--accent)] scale-110 z-10'
+                                        : 'bg-black/60 text-gray-500 border-gray-800 hover:border-(--accent) hover:text-white! hover:shadow-[0_0_15px_var(--accent)] hover:bg-black'
+                                        }`}
+                                >
+                                    <span className="block skew-x-15 group-hover:scale-105 transition-transform relative z-10">OFFERS</span>
+                                    {isActive('/dashboard/offers') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
                                 </button>
                             </div>
                         </div>

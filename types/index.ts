@@ -66,3 +66,33 @@ export interface ActivityLog {
     userAgent?: string;
     createdAt: Date | string;
 }
+
+export interface BundleOrder {
+    _id: string;
+    id: string;
+    userId: string;
+    username: string;
+    bundleTitle: string;
+    cardCount: number;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    purchaseDate: Date | string;
+}
+
+export interface Offer {
+    _id: string;
+    id: string;
+    title: string;
+    description: string;
+    cardCount: number;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    avgPricePerCard: number;
+    badge?: string;
+    isActive: boolean;
+    styleIndex: number;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+}

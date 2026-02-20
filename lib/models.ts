@@ -255,9 +255,67 @@ CardSchema.index({ price: 1 }); // Optimize sorting by price
 
 ActivityLogSchema.index({ userId: 1, createdAt: -1 }); // Optimize log history queries
 
+// Bundle Order Schema
+export interface IBundleOrder extends Document {
+    userId: string;
+    username: string;
+    bundleTitle: string;
+    cardCount: number;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    purchaseDate: Date;
+}
+
+const BundleOrderSchema = new Schema<IBundleOrder>({
+    userId: { type: String, required: true, index: true },
+    username: { type: String, required: true },
+    bundleTitle: { type: String, required: true },
+    cardCount: { type: Number, required: true },
+    discount: { type: Number, required: true },
+    originalPrice: { type: Number, required: true },
+    price: { type: Number, required: true },
+    purchaseDate: { type: Date, default: Date.now },
+});
+
+BundleOrderSchema.index({ userId: 1, purchaseDate: -1 });
+
+// ─── Offer Schema (admin-managed) ─────────────────────────────────────
+export interface IOffer extends Document {
+    title: string;
+    description: string;
+    cardCount: number;
+    discount: number;          // percent e.g. 20
+    originalPrice: number;
+    price: number;
+    avgPricePerCard: number;
+    badge?: string;            // e.g. "BEST VALUE"
+    isActive: boolean;
+    styleIndex: number;        // 0-5 for colour theme
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const OfferSchema = new Schema<IOffer>({
+    title: { type: String, required: true },
+    description: { type: String, default: '' },
+    cardCount: { type: Number, required: true },
+    discount: { type: Number, required: true },
+    originalPrice: { type: Number, required: true },
+    price: { type: Number, required: true },
+    avgPricePerCard: { type: Number, required: true },
+    badge: { type: String, default: '' },
+    isActive: { type: Boolean, default: true },
+    styleIndex: { type: Number, default: 0 },
+}, { timestamps: true });
+
+OfferSchema.index({ isActive: 1, createdAt: -1 });
+
 // Export Models (Safe Check)
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
 export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
 export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
+export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
+export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
