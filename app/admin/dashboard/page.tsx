@@ -1131,7 +1131,7 @@ export default function AdminDashboard() {
                                 )}
                             </AnimatePresence>
 
-                            {/* Cards List */}
+                
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {cards
                                     .slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)

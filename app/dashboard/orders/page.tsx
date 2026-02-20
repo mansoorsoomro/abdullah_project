@@ -20,7 +20,7 @@ export default function Orders() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
 
-    // Pagination State
+
     const [purchasesPage, setPurchasesPage] = useState(1);
     const [depositsPage, setDepositsPage] = useState(1);
     const [totalPurchasesPages, setTotalPurchasesPages] = useState(1);
