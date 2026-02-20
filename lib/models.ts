@@ -205,8 +205,59 @@ const CardSchema = new Schema<ICard>({
     },
 });
 
+// Activity Log Schema
+export interface IActivityLog extends Document {
+    userId: string;
+    action: string;
+    details?: string;
+    ip?: string;
+    createdAt: Date;
+}
+
+const ActivityLogSchema = new Schema<IActivityLog>({
+    userId: {
+        type: String,
+        required: true,
+        index: true, // Optimizes filtering logs by user
+    },
+    action: {
+        type: String,
+        required: true,
+    },
+    details: {
+        type: String,
+        default: '',
+    },
+    ip: {
+        type: String,
+        default: '',
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        index: true, // Optimizes sorting by date
+    },
+});
+
+// Create indexes for efficient querying
+UserSchema.index({ email: 1 });
+UserSchema.index({ username: 1 });
+UserSchema.index({ trxId: 1 });
+
+PaymentSchema.index({ userId: 1, createdAt: -1 }); // Optimize payment history queries
+PaymentSchema.index({ type: 1, status: 1 }); // Optimize filtering by type and status
+PaymentSchema.index({ trxId: 1 });
+
+OrderSchema.index({ userId: 1, purchaseDate: -1 }); // Optimize order history queries
+
+CardSchema.index({ forSale: 1, createdAt: -1 }); // Optimize marketplace listings
+CardSchema.index({ price: 1 }); // Optimize sorting by price
+
+ActivityLogSchema.index({ userId: 1, createdAt: -1 }); // Optimize log history queries
+
 // Export Models (Safe Check)
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
 export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
+export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);

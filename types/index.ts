@@ -56,3 +56,13 @@ export interface Payment {
     userStatus: 'NOT_APPROVED' | 'APPROVED' | 'N/A';
     createdAt: Date | string;
 }
+
+export interface ActivityLog {
+    _id: string;
+    userId: string;
+    action: string;
+    details: string;
+    ip?: string;
+    userAgent?: string;
+    createdAt: Date | string;
+}

@@ -34,9 +34,21 @@ export function decrypt(text: string): string {
 
     try {
         const parts = text.split(':');
-        const iv = Buffer.from(parts[0], 'hex');
-        const encryptedText = parts[1];
 
+        // Check if we have at least 2 parts (IV and encrypted text) and the IV is the correct length for hex (32 chars = 16 bytes)
+        if (parts.length < 2 || parts[0].length !== 32) {
+            // Assume it's not encrypted or legacy data, return original
+            return text;
+        }
+
+        const iv = Buffer.from(parts[0], 'hex');
+
+        // Double check IV buffer length just to be sure
+        if (iv.length !== 16) {
+            return text;
+        }
+
+        const encryptedText = parts[1];
         const decipher = crypto.createDecipheriv('aes-256-cbc', getEncryptionKey(), iv);
 
         let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
@@ -44,8 +56,9 @@ export function decrypt(text: string): string {
 
         return decrypted;
     } catch (error) {
-        console.error('Decryption error:', error);
-        return text; // Return original if decryption fails (for backward compatibility)
+        // If decryption fails for any reason (e.g. wrong key, tampered data), return original text
+        // console.warn('Decryption failed, returning original text:', error.message);
+        return text;
     }
 }
 

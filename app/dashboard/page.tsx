@@ -12,6 +12,11 @@ export default function Dashboard() {
     const [purchasing, setPurchasing] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
 
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const itemsPerPage = 9;
+
     const { openDepositModal, showNotification, refreshUser } = useDashboard();
     const router = useRouter();
 
@@ -20,14 +25,18 @@ export default function Dashboard() {
         if (userData) {
             setUser(JSON.parse(userData));
         }
-        fetchCards();
-    }, []);
+        fetchCards(currentPage);
+    }, [currentPage]);
 
-    const fetchCards = async () => {
+    const fetchCards = async (page: number) => {
+        setLoading(true);
         try {
-            const response = await fetch('/api/cards');
+            const response = await fetch(`/api/cards?page=${page}&limit=${itemsPerPage}`);
             const data = await response.json();
             setCards(data.cards || []);
+            if (data.pagination) {
+                setTotalPages(data.pagination.pages);
+            }
         } catch (error) {
             console.error('Failed to fetch cards:', error);
         } finally {
@@ -92,7 +101,7 @@ export default function Dashboard() {
         return `**** **** **** ${last4}`;
     };
 
-    if (loading) {
+    if (loading && cards.length === 0) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="cyber-spinner"></div>
@@ -177,7 +186,7 @@ export default function Dashboard() {
                                 <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
 
                                     {/* Background texture */}
-                                    <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
+                                    <div className="absolute inset-0 opacity-20 bg-grid pointer-events-none"></div>
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                                     {/* Top Row: Chip and Price */}
@@ -275,8 +284,44 @@ export default function Dashboard() {
                 ))}
             </div>
 
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="p-4 flex justify-center gap-2 mt-8">
+                    <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
+                    >
+                        PREV
+                    </button>
+                    <div className="flex items-center gap-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))
+                            .map(pageNum => (
+                                <button
+                                    key={pageNum}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold transition-colors ${currentPage === pageNum
+                                        ? 'bg-(--accent) text-black'
+                                        : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
+                                        }`}
+                                >
+                                    {pageNum}
+                                </button>
+                            ))}
+                    </div>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
+                    >
+                        NEXT
+                    </button>
+                </div>
+            )}
+
             {/* Empty state */}
-            {cards.length === 0 && (
+            {cards.length === 0 && !loading && (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

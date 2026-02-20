@@ -102,6 +102,19 @@ body {
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
+  /* Simple White Arrow Cursor */
+  cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 2.5L11.5 19.5L14.5 12.5L21.5 11.5L5.5 2.5Z" fill="white" stroke="black" stroke-width="1.5"/></svg>') 2 2, default;
+}
+
+/* Interactive elements hover state - hand cursor but styled */
+button,
+a,
+input,
+select,
+textarea,
+.clickable {
+  cursor: pointer;
+  cursor: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 2.5L11.5 19.5L14.5 12.5L21.5 11.5L5.5 2.5Z" fill="white" stroke="%23ff0033" stroke-width="1.5"/></svg>') 2 2, pointer;
 }
 
 h1,

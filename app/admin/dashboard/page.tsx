@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import type { Payment, Card, Order } from '../../../types';
+import type { Payment, Card, Order, User, ActivityLog } from '../../../types';
 import AdminGridBackground from '../../theme/AdminGridBackground';
 
 export default function AdminDashboard() {
@@ -13,10 +13,32 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [approving, setApproving] = useState<string | null>(null);
     const [showAddCard, setShowAddCard] = useState(false);
-    const [activeTab, setActiveTab] = useState<'payments' | 'cards' | 'orders'>('payments');
+    const [users, setUsers] = useState<User[]>([]);
+    const [activeTab, setActiveTab] = useState<'payments' | 'cards' | 'orders' | 'users'>('payments');
     const [orders, setOrders] = useState<Order[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Edit Modal States
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [editUserForm, setEditUserForm] = useState<Partial<User>>({});
+
+    // Card Edit State
+    const [editingCard, setEditingCard] = useState<Card | null>(null);
+    const [editCardForm, setEditCardForm] = useState<Partial<Card>>({});
+
+    // Pagination for Users
+    const [usersPage, setUsersPage] = useState(1);
+    const usersPerPage = 20;
+
+    // Pagination for Cards
+    const [cardsPage, setCardsPage] = useState(1);
+    const cardsPerPage = 9;
+
+    // Activity Logs
+    const [userLogs, setUserLogs] = useState<ActivityLog[]>([]);
+    const [viewingLogsUserId, setViewingLogsUserId] = useState<string | null>(null);
     const ordersPerPage = 40;
+
 
     // Pagination for Payments Tab
     const [alertsPage, setAlertsPage] = useState(1);
@@ -68,6 +90,7 @@ export default function AdminDashboard() {
         fetchPayments();
         fetchCards();
         fetchOrders();
+        fetchUsers();
     }, [router]);
 
     const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
@@ -101,9 +124,43 @@ export default function AdminDashboard() {
         try {
             const response = await fetch('/api/admin/orders');
             const data = await response.json();
-            setOrders(data.orders || []);
+            const formattedOrders = (data.orders || []).map((o: any) => ({
+                ...o,
+                id: o._id || o.id
+            }));
+            setOrders(formattedOrders);
         } catch (error) {
             console.error('Failed to fetch orders:', error);
+        }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            console.log('Fetching users...');
+            const response = await fetch('/api/admin/users', { cache: 'no-store' });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.details || errorData.error || 'Failed to fetch');
+            }
+
+            const data = await response.json();
+            console.log('Users fetched:', data);
+
+            // Handle both _id and id
+            const formattedUsers = (data.users || []).map((u: any) => ({
+                ...u,
+                id: u._id || u.id,
+                // Ensure status is valid or default to NOT_APPROVED
+                status: u.status || 'NOT_APPROVED',
+                // Ensure balance is number
+                balance: typeof u.balance === 'number' ? u.balance : (parseFloat(u.balance) || 0)
+            }));
+
+            setUsers(formattedUsers);
+        } catch (error: any) {
+            console.error('Failed to fetch users:', error);
+            showNotification(`User Sync Failed: ${error.message}`, 'error');
         }
     };
 
@@ -250,6 +307,119 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleDeleteUser = async (userId: string) => {
+        if (!confirm('Are you sure you want to permanently delete this user? This cannot be undone.')) return;
+
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                showNotification('✓ User deleted successfully!', 'success');
+                fetchUsers();
+            } else {
+                showNotification('Failed to delete user', 'error');
+            }
+        } catch (error) {
+            showNotification('Delete failed. Check server.', 'error');
+        }
+    };
+
+    const handleUpdateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser) return;
+
+        try {
+            // Ensure we use _id if id is missing or mapped
+            const userId = (editUserForm as any)._id || (editUserForm as any).id;
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editUserForm),
+            });
+
+            if (response.ok) {
+                showNotification('✓ User updated successfully!', 'success');
+                setEditingUser(null);
+                fetchUsers();
+            } else {
+                showNotification('Failed to update user', 'error');
+            }
+        } catch (error) {
+            showNotification('Update failed.', 'error');
+        }
+    };
+
+    const handleUpdateCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCard) return;
+
+        try {
+            const cardId = (editCardForm as any)._id || (editCardForm as any).id;
+            const response = await fetch(`/api/admin/cards/${cardId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editCardForm),
+            });
+
+            if (response.ok) {
+                showNotification('✓ Card updated successfully!', 'success');
+                setEditingCard(null);
+                fetchCards();
+            } else {
+                showNotification('Failed to update card', 'error');
+            }
+        } catch (error) {
+            showNotification('Update failed.', 'error');
+        }
+    };
+
+    const fetchActivityLogs = async (userId: string) => {
+        setViewingLogsUserId(userId);
+        setUserLogs([]); // Clear previous
+        try {
+            const response = await fetch(`/api/admin/activities?userId=${userId}`);
+            const data = await response.json();
+            if (response.ok) {
+                setUserLogs(data.activities || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch logs', error);
+        }
+    };
+
+    const handleImpersonateUser = async (user: User) => {
+        if (!confirm(`⚠ SECURITY WARNING ⚠\n\nYou are about to login as ${user.username}.\nThis will grant you full access to their account.\n\nProceed?`)) return;
+
+        try {
+            // Get user ID properly
+            const userId = user.id || (user as any)._id;
+
+            const response = await fetch(`/api/admin/users/${userId}/impersonate`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Set the session
+                localStorage.setItem('user', JSON.stringify(data.user));
+                // Open in new tab so admin session stays alive
+                window.open('/dashboard', '_blank');
+                showNotification(`Logged in as ${user.username} in new tab`, 'success');
+            } else {
+                showNotification('Impersonation failed', 'error');
+            }
+        } catch (error) {
+            showNotification('Server connection error', 'error');
+        }
+    };
+
+    // Calculate Dashboard Stats
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.price || 0), 0);
+    const totalUsers = users.length;
+    const activeCards = cards.filter(c => c.forSale).length;
+
     const handleLogout = () => {
         localStorage.removeItem('adminAuth');
         router.push('/admin');
@@ -292,6 +462,62 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-black relative overflow-hidden selection:bg-red-500/30">
+            {/* Edit Card Modal */}
+            <AnimatePresence>
+                {editingCard && (
+                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-[#0f0f0f] border border-gray-800 p-8 rounded-xl w-full max-w-2xl shadow-2xl relative my-10"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-(--accent)"></div>
+                            <h3 className="text-xl font-black text-white mb-6 tracking-widest flex items-center gap-3">
+                                <span className="text-(--accent)">EDIT</span> ASSET
+                            </h3>
+
+                            <form onSubmit={handleUpdateCard} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="col-span-1 md:col-span-2 space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Title</label>
+                                    <input type="text" value={editCardForm.title || ''} onChange={(e) => setEditCardForm({ ...editCardForm, title: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Price</label>
+                                    <input type="number" value={editCardForm.price || ''} onChange={(e) => setEditCardForm({ ...editCardForm, price: parseFloat(e.target.value) })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Card Number</label>
+                                    <input type="text" value={editCardForm.cardNumber || ''} onChange={(e) => setEditCardForm({ ...editCardForm, cardNumber: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                {/* Additional Fields */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Expiry</label>
+                                    <input type="text" value={editCardForm.expiry || ''} onChange={(e) => setEditCardForm({ ...editCardForm, expiry: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">CVV</label>
+                                    <input type="text" value={editCardForm.cvv || ''} onChange={(e) => setEditCardForm({ ...editCardForm, cvv: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Balance/Limit</label>
+                                    <input type="text" value={editCardForm.bank || ''} onChange={(e) => setEditCardForm({ ...editCardForm, bank: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Type</label>
+                                    <input type="text" value={editCardForm.type || ''} onChange={(e) => setEditCardForm({ ...editCardForm, type: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+
+                                <div className="col-span-1 md:col-span-2 flex gap-4 mt-6">
+                                    <button type="button" onClick={() => setEditingCard(null)} className="flex-1 py-3 bg-gray-900 text-gray-400 font-bold text-xs hover:bg-gray-800">CANCEL</button>
+                                    <button type="submit" className="flex-1 py-3 bg-(--accent) text-black font-bold text-xs hover:bg-white">SAVE CHANGES</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {/* Background Animation */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <AdminGridBackground />
@@ -474,6 +700,83 @@ export default function AdminDashboard() {
                         <span className="block skew-x-15 relative z-10">SALES HISTORY</span>
                         {activeTab !== 'orders' && <div className="absolute inset-0 bg-(--accent)/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>}
                     </button>
+                    <button
+                        onClick={() => setActiveTab('users')}
+                        className={`px-8 py-3 text-sm font-black tracking-widest transition-all skew-x-[-15deg] border-2 uppercase relative overflow-hidden group ${activeTab === 'users'
+                            ? 'bg-(--accent) text-black border-(--accent) shadow-[0_0_20px_var(--accent)] scale-105'
+                            : 'bg-black/50 text-gray-500 border-gray-800 hover:border-(--accent) hover:text-(--accent) hover:shadow-[0_0_10px_rgba(255,0,51,0.3)]'
+                            }`}
+                    >
+                        <span className="block skew-x-15 relative z-10">USER MANAGEMENT</span>
+                        {activeTab !== 'users' && <div className="absolute inset-0 bg-(--accent)/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>}
+                    </button>
+                </div>
+
+                {/* Stats Bar - Always Visible */}
+                {/* Unified Dashboard Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                    {[
+                        {
+                            label: 'TOTAL REVENUE',
+                            value: `$${totalRevenue.toLocaleString()}`,
+                            color: 'text-green-500',
+                            subValue: 'USDT EARNED',
+                            icon: '$'
+                        },
+                        {
+                            label: 'TOTAL USERS',
+                            value: totalUsers,
+                            color: 'text-white',
+                            subValue: 'REGISTERED ACCOUNTS',
+                            icon: 'U'
+                        },
+                        {
+                            label: 'ACTIVE ASSETS',
+                            value: activeCards,
+                            color: 'text-(--accent)',
+                            subValue: 'INVENTORY COUNT',
+                            icon: 'A'
+                        },
+                        {
+                            label: 'TOTAL TRAFFIC',
+                            value: payments.length,
+                            color: 'text-white',
+                            subValue: 'ALL PAYMENTS',
+                            icon: 'T'
+                        },
+                        {
+                            label: 'PENDING REQUESTS',
+                            value: pendingPayments.length,
+                            color: 'text-(--accent)',
+                            animate: true,
+                            subValue: 'ACTION REQUIRED',
+                            icon: 'P'
+                        },
+                        {
+                            label: 'VERIFIED AGENTS',
+                            value: approvedPayments.length,
+                            color: 'text-green-500',
+                            subValue: 'CLEARED TRANSACTIONS',
+                            icon: 'V'
+                        }
+                    ].map((stat, i) => (
+                        <div key={i} className="relative bg-[#0a0a0a] p-8 rounded-xl border border-(--border) overflow-hidden group hover:border-(--accent)/50 transition-colors shadow-lg min-h-[180px] flex flex-col justify-between" style={{ padding: '32px' }}>
+                            <div className="absolute inset-0 bg-linear-to-br from-transparent via-transparent to-(--accent)/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute -right-4 -bottom-4 text-9xl font-black opacity-[0.03] select-none pointer-events-none group-hover:opacity-[0.05] transition-opacity">
+                                {stat.icon || i + 1}
+                            </div>
+
+                            <div className="relative z-10 w-full">
+                                <p className="text-[10px] text-gray-500 font-bold tracking-[0.2em] mb-4 uppercase">{stat.label}</p>
+                                <div className="flex items-center w-full">
+                                    <p className={`text-3xl lg:text-4xl xl:text-5xl font-black ${stat.color} ${stat.animate ? 'animate-pulse' : ''} text-glow tracking-tighter break-all w-full leading-none`} title={stat.value.toString()}>
+                                        {stat.value}
+                                    </p>
+                                </div>
+                                {stat.subValue && <p className="text-[10px] text-gray-600 font-mono mt-2 tracking-widest">{stat.subValue}</p>}
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 {/* Payments Tab */}
@@ -484,28 +787,7 @@ export default function AdminDashboard() {
                         exit={{ opacity: 0, x: 20 }}
                     >
                         {/* Stats */}
-                        <div
-                            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
-                        >
-                            {[
-                                { label: 'TOTAL TRAFFIC', value: payments.length, color: 'text-white' },
-                                { label: 'PENDING REQUESTS', value: pendingPayments.length, color: 'text-(--accent)', animate: true },
-                                { label: 'VERIFIED AGENTS', value: approvedPayments.length, color: 'text-green-500' }
-                            ].map((stat, i) => (
-                                <div key={i} className="relative bg-[#0a0a0a] p-8 rounded-xl border border-(--border) overflow-hidden group hover:border-(--accent)/50 transition-colors shadow-lg" style={{ padding: '32px' }}>
-                                    <div className="absolute inset-0 bg-(--accent)/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <div className="absolute top-0 right-0 p-4 opacity-10 text-8xl font-black select-none pointer-events-none">
-                                        {i + 1}
-                                    </div>
-                                    <div className="relative z-10">
-                                        <p className="text-xs text-gray-500 font-bold tracking-[0.2em] mb-4">{stat.label}</p>
-                                        <p className={`text-6xl font-black ${stat.color} ${stat.animate ? 'animate-pulse' : ''} text-glow`}>
-                                            {stat.value}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+
 
                         {/* Pending approvals */}
                         <div
@@ -851,115 +1133,163 @@ export default function AdminDashboard() {
 
                             {/* Cards List */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {cards.map((card, index) => (
-                                    <motion.div
-                                        key={card.id}
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="group relative perspective-[1000px] h-[240px]"
-                                        style={{ padding: '0' }}
-                                    >
-                                        {/* 3D Card Container */}
-                                        <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
+                                {cards
+                                    .slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)
+                                    .map((card, index) => (
+                                        <motion.div
+                                            key={card.id}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className="group relative perspective-[1000px] h-[240px]"
+                                            style={{ padding: '0' }}
+                                        >
+                                            {/* 3D Card Container */}
+                                            <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
 
-                                            {/* FRONT SIDE (Blue Card) */}
-                                            <div className="absolute inset-0 backface-hidden">
-                                                <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
+                                                {/* FRONT SIDE (Blue Card) */}
+                                                <div className="absolute inset-0 backface-hidden">
+                                                    <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
 
-                                                    {/* Background texture */}
-                                                    <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
-                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                                        {/* Background texture */}
+                                                        <div className="absolute inset-0 opacity-20 bg-grid pointer-events-none"></div>
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
-                                                    {/* Top Row: Chip and Price */}
-                                                    <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
-                                                        <div className="w-12 h-9 bg-yellow-400 rounded-md shadow-sm border border-yellow-500/50 relative overflow-hidden flex items-center justify-center">
-                                                            <div className="grid grid-cols-2 gap-1 w-full h-full p-[2px] opacity-50">
-                                                                <div className="border border-black/20 rounded-sm"></div>
-                                                                <div className="border border-black/20 rounded-sm"></div>
-                                                                <div className="border border-black/20 rounded-sm"></div>
-                                                                <div className="border border-black/20 rounded-sm"></div>
+                                                        {/* Top Row: Chip and Price */}
+                                                        <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
+                                                            <div className="w-12 h-9 bg-yellow-400 rounded-md shadow-sm border border-yellow-500/50 relative overflow-hidden flex items-center justify-center">
+                                                                <div className="grid grid-cols-2 gap-1 w-full h-full p-[2px] opacity-50">
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex flex-col items-end gap-1">
+                                                                <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
+                                                                    {card.price} USDT
+                                                                </div>
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
-                                                                {card.price} USDT
+                                                        {/* Card Number */}
+                                                        <div className="mt-2" style={{ padding: '10px' }}>
+                                                            <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
+                                                                {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Bottom Info */}
+                                                        <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
+                                                            <div>
+                                                                <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
+                                                                <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
+                                                                    <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
 
-                                                    {/* Card Number */}
-                                                    <div className="mt-2" style={{ padding: '10px' }}>
-                                                        <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
-                                                            {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Bottom Info */}
-                                                    <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
-                                                        <div>
-                                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
-                                                            <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
-                                                        </div>
-                                                        <div className="flex flex-col items-end">
-                                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
-                                                                <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Shine overlay */}
-                                                    <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl mix-blend-overlay"></div>
-                                                </div>
-                                            </div>
-
-                                            {/* BACK SIDE (Dark Card) */}
-                                            <div className="absolute inset-0 backface-hidden rotate-y-180">
-                                                <div className="relative w-full h-full bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden border border-gray-800 flex flex-col">
-
-                                                    {/* Magnetic Strip */}
-                                                    <div className="w-full h-10 bg-black mt-5"></div>
-
-                                                    {/* CVC Section */}
-                                                    <div className="px-6 mt-3 flex items-center justify-between">
-                                                        <div className="w-3/4 relative">
-                                                            <div className="bg-white h-8 w-full flex items-center justify-end px-3">
-                                                                <span className="font-mono font-bold text-black tracking-widest">XXX</span>
-                                                            </div>
-                                                            <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Bottom Logo & Action */}
-                                                    <div className="flex-1 flex items-end justify-between px-6 pb-4">
-                                                        <div className="flex flex-col gap-1">
-                                                            <div className="text-[8px] text-gray-500">Authorized Signature</div>
-                                                            <div className="h-0.5 w-32 bg-white/20"></div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Delete Button Overlay */}
-                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-[2px] z-10">
-                                                        <button
-                                                            onClick={() => handleDeleteCard(card.id)}
-                                                            className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded hover:bg-red-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] uppercase tracking-widest flex items-center gap-2"
-                                                        >
-                                                            <span>✕ DELETE ASSET</span>
-                                                        </button>
+                                                        {/* Shine overlay */}
+                                                        <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl mix-blend-overlay"></div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                                {/* BACK SIDE (Dark Card) */}
+                                                <div className="absolute inset-0 backface-hidden rotate-y-180">
+                                                    <div className="relative w-full h-full bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden border border-gray-800 flex flex-col">
+
+                                                        {/* Magnetic Strip */}
+                                                        <div className="w-full h-10 bg-black mt-5"></div>
+
+                                                        {/* CVC Section */}
+                                                        <div className="px-6 mt-3 flex items-center justify-between">
+                                                            <div className="w-3/4 relative">
+                                                                <div className="bg-white h-8 w-full flex items-center justify-end px-3">
+                                                                    <span className="font-mono font-bold text-black tracking-widest">XXX</span>
+                                                                </div>
+                                                                <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Bottom Logo & Action */}
+                                                        <div className="flex-1 flex items-end justify-between px-6 pb-4">
+                                                            <div className="flex flex-col gap-1">
+                                                                <div className="text-[8px] text-gray-500">Authorized Signature</div>
+                                                                <div className="h-0.5 w-32 bg-white/20"></div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Buttons Overlay */}
+                                                        <div className="absolute inset-0 flex flex-col gap-2 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 backdrop-blur-[2px] z-10 p-6">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingCard(card);
+                                                                    setEditCardForm(card);
+                                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                                }}
+                                                                className="w-full py-3 bg-white text-black text-xs font-black rounded hover:bg-gray-200 transition-all uppercase tracking-widest flex items-center justify-center gap-2 mb-2"
+                                                            >
+                                                                <span>✎ EDIT ASSET</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteCard(card.id)}
+                                                                className="w-full py-3 bg-red-600 text-white text-xs font-black rounded hover:bg-red-500 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] uppercase tracking-widest flex items-center justify-center gap-2"
+                                                            >
+                                                                <span>✕ DELETE</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </motion.div>
+                                    ))}
                             </div>
+
+                            {/* Cards Pagination Controls */}
+                            {cards.length > cardsPerPage && (
+                                <div className="p-4 border-t border-gray-800 flex justify-center gap-2 mt-8">
+                                    <button
+                                        onClick={() => setCardsPage(p => Math.max(1, p - 1))}
+                                        disabled={cardsPage === 1}
+                                        className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
+                                    >
+                                        PREV
+                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {Array.from({ length: Math.ceil(cards.length / cardsPerPage) }, (_, i) => i + 1)
+                                            .slice(Math.max(0, cardsPage - 3), Math.min(Math.ceil(cards.length / cardsPerPage), cardsPage + 2))
+                                            .map(pageNum => (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCardsPage(pageNum)}
+                                                    className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold transition-colors ${cardsPage === pageNum
+                                                        ? 'bg-(--accent) text-black'
+                                                        : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
+                                                        }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            ))}
+                                    </div>
+                                    <button
+                                        onClick={() => setCardsPage(p => Math.min(Math.ceil(cards.length / cardsPerPage), p + 1))}
+                                        disabled={cardsPage === Math.ceil(cards.length / cardsPerPage)}
+                                        className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
+                                    >
+                                        NEXT
+                                    </button>
+                                </div>
+                            )}
 
                             {cards.length === 0 && !showAddCard && (
                                 <div className="p-12 border border-dashed border-(--border) rounded-lg text-center bg-(--bg-secondary)/50">
@@ -1202,6 +1532,257 @@ export default function AdminDashboard() {
                                     <p className="text-gray-600 text-sm font-mono">Transactions will appear here once processed.</p>
                                 </div>
                             )}
+                        </motion.div>
+                    )
+                }
+
+
+                {/* Users Tab */}
+                {
+                    activeTab === 'users' && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                        >
+                            {/* Edit User Modal */}
+                            <AnimatePresence>
+                                {editingUser && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            className="bg-[#0f0f0f] border border-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl relative overflow-hidden"
+                                        >
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-(--accent)"></div>
+                                            <h3 className="text-xl font-black text-white mb-6 tracking-widest flex items-center gap-3">
+                                                <span className="text-(--accent)">EDIT</span> USER
+                                            </h3>
+
+                                            <form onSubmit={handleUpdateUser} className="space-y-4">
+                                                <div>
+                                                    <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase block mb-1">Username</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editUserForm.username || ''}
+                                                        onChange={(e) => setEditUserForm({ ...editUserForm, username: e.target.value })}
+                                                        className="w-full bg-black/50 border border-gray-800 rounded p-3 text-white focus:border-(--accent) focus:outline-none transition-colors text-sm font-bold"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase block mb-1">Email</label>
+                                                    <input
+                                                        type="email"
+                                                        value={editUserForm.email || ''}
+                                                        onChange={(e) => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                                                        className="w-full bg-black/50 border border-gray-800 rounded p-3 text-white focus:border-(--accent) focus:outline-none transition-colors text-sm font-bold"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase block mb-1">Status</label>
+                                                    <select
+                                                        value={editUserForm.status || 'NOT_APPROVED'}
+                                                        onChange={(e) => setEditUserForm({ ...editUserForm, status: e.target.value as any })}
+                                                        className="w-full bg-black/50 border border-gray-800 rounded p-3 text-white focus:border-(--accent) focus:outline-none transition-colors text-sm font-bold"
+                                                    >
+                                                        <option value="NOT_APPROVED">NOT APPROVED</option>
+                                                        <option value="APPROVED">APPROVED</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase block mb-1">Balance</label>
+                                                    <input
+                                                        type="number"
+                                                        value={editUserForm.balance || 0}
+                                                        onChange={(e) => setEditUserForm({ ...editUserForm, balance: parseFloat(e.target.value) })}
+                                                        className="w-full bg-black/50 border border-gray-800 rounded p-3 text-white focus:border-(--accent) focus:outline-none transition-colors text-sm font-bold"
+                                                    />
+                                                </div>
+
+                                                <div className="flex gap-3 pt-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditingUser(null)}
+                                                        className="flex-1 py-3 text-xs font-bold tracking-widest bg-gray-900 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors rounded"
+                                                    >
+                                                        CANCEL
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        className="flex-1 py-3 text-xs font-bold tracking-widest bg-(--accent) text-black hover:bg-white transition-colors rounded shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                                                    >
+                                                        SAVE CHANGES
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </motion.div>
+                                    </div>
+                                )}
+
+                            </AnimatePresence>
+
+                            {/* Activity Logs Modal */}
+                            <AnimatePresence>
+                                {viewingLogsUserId && (
+                                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            className="bg-[#0f0f0f] border border-gray-800 p-8 rounded-xl w-full max-w-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[80vh]"
+                                        >
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+                                            <div className="flex justify-between items-center mb-6">
+                                                <h3 className="text-xl font-black text-white tracking-widest flex items-center gap-3">
+                                                    <span className="text-blue-500">ACTIVITY</span> LOGS
+                                                </h3>
+                                                <button onClick={() => setViewingLogsUserId(null)} className="text-gray-500 hover:text-white">✕</button>
+                                            </div>
+
+                                            <div className="overflow-y-auto flex-1 pr-2 space-y-2">
+                                                {userLogs.length > 0 ? (
+                                                    userLogs.map((log) => (
+                                                        <div key={log._id} className="bg-black/40 p-3 rounded border border-white/5 text-xs font-mono">
+                                                            <div className="flex justify-between text-gray-500 mb-1">
+                                                                <span className="text-blue-400 font-bold">{log.action}</span>
+                                                                <span>{new Date(log.createdAt).toLocaleString()}</span>
+                                                            </div>
+                                                            <p className="text-gray-300">{log.details}</p>
+                                                            <div className="mt-1 flex gap-4 text-[10px] text-gray-600">
+                                                                <span>IP: {log.ip}</span>
+                                                                <span>UA: {log.userAgent?.substring(0, 30)}...</span>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-center py-10 text-gray-500 font-mono">NO ACTIVITY RECORDED</div>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                )}
+                            </AnimatePresence>
+
+                            <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-800">
+                                <h2 className="text-2xl font-black tracking-widest text-white">
+                                    USER MANAGEMENT <span className="text-(--accent) text-lg align-top ml-2">({users.length})</span>
+                                </h2>
+                            </div>
+
+                            <div className="bg-[#0a0a0a]/80 backdrop-blur-md border border-gray-800 rounded-xl overflow-hidden shadow-2xl relative">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-blue-500 to-transparent opacity-50"></div>
+
+                                <div className="grid grid-cols-6 p-4 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap">
+                                    <div className="col-span-1">ID</div>
+                                    <div className="col-span-2">USER DETAILS</div>
+                                    <div className="text-center">STATUS</div>
+                                    <div className="text-center">BALANCE</div>
+                                    <div className="text-right">ACTIONS</div>
+                                </div>
+
+                                <div className="divide-y divide-white/5">
+                                    {users.length > 0 ? (
+                                        users
+                                            .slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage)
+                                            .map((user, index) => (
+                                                <motion.div
+                                                    key={user.id || (user as any)._id}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: index * 0.03 }}
+                                                    className="grid grid-cols-6 p-4 hover:bg-[#111] transition-all duration-300 items-center group relative overflow-hidden"
+                                                >
+                                                    <div className="font-mono text-[10px] text-gray-600 truncate pr-2">{(user.id || (user as any)._id || '').substring(0, 8)}...</div>
+                                                    <div className="col-span-2 pr-4">
+                                                        <div className="font-bold text-white text-sm">{user.username}</div>
+                                                        <div className="text-xs text-gray-500 font-mono">{user.email}</div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <span className={`px-2 py-1 rounded text-[10px] font-bold ${user.status === 'APPROVED' ? 'bg-green-900/20 text-green-500 border border-green-900/50' : 'bg-red-900/20 text-red-500 border border-red-900/50'}`}>
+                                                            {user.status}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-center font-mono text-sm text-gray-300">
+                                                        {(user.balance || 0).toLocaleString()}
+                                                    </div>
+                                                    <div className="text-right flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={() => fetchActivityLogs(user.id || (user as any)._id)}
+                                                            className="p-2 hover:bg-blue-900/20 rounded text-gray-500 hover:text-blue-500 transition-colors"
+                                                            title="View Logs"
+                                                        >
+                                                            📜
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleImpersonateUser(user)}
+                                                            className="p-2 hover:bg-green-900/20 rounded text-gray-500 hover:text-green-500 transition-colors"
+                                                            title="Login as User"
+                                                        >
+                                                            🔑
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUser(user);
+                                                                setEditUserForm(user);
+                                                            }}
+                                                            className="p-2 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                                                            title="Edit User"
+                                                        >
+                                                            ✎
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteUser(user.id || (user as any)._id)}
+                                                            className="p-2 hover:bg-red-900/20 rounded text-gray-500 hover:text-red-500 transition-colors"
+                                                            title="Delete User"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            ))
+                                    ) : (
+                                        <div className="p-12 text-center text-gray-500 font-mono tracking-widest">
+                                            NO USERS FOUND
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Pagination */}
+                                {users.length > usersPerPage && (
+                                    <div className="p-4 border-t border-gray-800 flex justify-center gap-2">
+                                        <button
+                                            onClick={() => setUsersPage(p => Math.max(1, p - 1))}
+                                            disabled={usersPage === 1}
+                                            className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
+                                        >
+                                            PREV
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            {Array.from({ length: Math.ceil(users.length / usersPerPage) }, (_, i) => i + 1)
+                                                .slice(Math.max(0, usersPage - 3), Math.min(Math.ceil(users.length / usersPerPage), usersPage + 2))
+                                                .map(pageNum => (
+                                                    <button
+                                                        key={pageNum}
+                                                        onClick={() => setUsersPage(pageNum)}
+                                                        className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold transition-colors ${usersPage === pageNum
+                                                            ? 'bg-(--accent) text-black'
+                                                            : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
+                                                            }`}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                ))}
+                                        </div>
+                                        <button
+                                            onClick={() => setUsersPage(p => Math.min(Math.ceil(users.length / usersPerPage), p + 1))}
+                                            disabled={usersPage === Math.ceil(users.length / usersPerPage)}
+                                            className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
+                                        >
+                                            NEXT
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </motion.div>
                     )
                 }
