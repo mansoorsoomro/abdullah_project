@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     const [approving, setApproving] = useState<string | null>(null);
     const [showAddCard, setShowAddCard] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
-    const [activeTab, setActiveTab] = useState<'payments' | 'cards' | 'orders' | 'users' | 'bundles' | 'offers'>('payments');
+    const [activeTab, setActiveTab] = useState<'payments' | 'cards' | 'orders' | 'users' | 'bundles' | 'offers' | 'settings'>('payments');
     const [orders, setOrders] = useState<Order[]>([]);
     const [bundleOrders, setBundleOrders] = useState<BundleOrder[]>([]);
     const [adminOffers, setAdminOffers] = useState<Offer[]>([]);
@@ -94,6 +94,17 @@ export default function AdminDashboard() {
         proxy: ''
     });
 
+    // Settings State
+    const [appSettings, setAppSettings] = useState({ signupAmount: 2000, minDepositAmount: 7000 });
+    const [settingsSaving, setSettingsSaving] = useState(false);
+
+    const fetchSettings = async () => {
+        try {
+            const res = await fetch('/api/settings');
+            const data = await res.json();
+            if (data.settings) setAppSettings(data.settings);
+        } catch (e) { console.error('Failed to fetch settings', e); }
+    };
 
     useEffect(() => {
         const adminAuth = localStorage.getItem('adminAuth');
@@ -107,6 +118,7 @@ export default function AdminDashboard() {
         fetchUsers();
         fetchBundleOrders();
         fetchAdminOffers();
+        fetchSettings();
     }, [router]);
 
     const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
@@ -125,6 +137,27 @@ export default function AdminDashboard() {
             console.error('Failed to fetch payments:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSettingsSaving(true);
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(appSettings),
+            });
+            if (response.ok) {
+                showNotification('✓ Settings updated successfully!', 'success');
+            } else {
+                showNotification('Failed to update settings', 'error');
+            }
+        } catch (error) {
+            showNotification('Connection error', 'error');
+        } finally {
+            setSettingsSaving(false);
         }
     };
 
@@ -795,6 +828,16 @@ export default function AdminDashboard() {
                     >
                         <span className="block skew-x-15 relative z-10">OFFERS MANAGER</span>
                         {activeTab !== 'offers' && <div className="absolute inset-0 bg-(--accent)/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`px-8 py-3 text-sm font-black tracking-widest transition-all skew-x-[-15deg] border-2 uppercase relative overflow-hidden group ${activeTab === 'settings'
+                            ? 'bg-(--accent) text-black border-(--accent) shadow-[0_0_20px_var(--accent)] scale-105'
+                            : 'bg-black/50 text-gray-500 border-gray-800 hover:border-(--accent) hover:text-(--accent) hover:shadow-[0_0_10px_rgba(255,0,51,0.3)]'
+                            }`}
+                    >
+                        <span className="block skew-x-15 relative z-10">SYST SETTINGS</span>
+                        {activeTab !== 'settings' && <div className="absolute inset-0 bg-(--accent)/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>}
                     </button>
                 </div>
 
@@ -1990,7 +2033,7 @@ export default function AdminDashboard() {
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 transition={{ delay: index * 0.03 }}
-                                                className="group hover:bg-white/[0.02] transition-colors"
+                                                className="group hover:bg-white/2 transition-colors"
                                             >
                                                 <td className="px-5 py-4">
                                                     <span className="text-xs font-bold text-white font-mono">{bo.username}</span>
@@ -2133,7 +2176,7 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+                        className="fixed inset-0 z-9999 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
                         onClick={() => { if (!offerSaving) setShowOfferModal(false); }}
                     >
                         <motion.div
@@ -2145,12 +2188,12 @@ export default function AdminDashboard() {
                             className="relative bg-[#0a0a0a] border border-(--accent)/70 rounded-2xl w-full max-w-2xl shadow-[0_0_80px_rgba(255,0,51,0.18)] overflow-hidden max-h-[90vh] flex flex-col"
                         >
                             {/* Accent top bar */}
-                            <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[--accent] to-transparent flex-shrink-0" />
+                            <div className="h-[2px] w-full bg-linear-to-r from-transparent via-[--accent] to-transparent shrink-0" />
                             {/* Glow orb */}
                             <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full blur-3xl pointer-events-none opacity-20" style={{ background: 'var(--accent)' }} />
 
                             {/* ── Modal Header ── */}
-                            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800/80 bg-black/50 flex-shrink-0">
+                            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-800/80 bg-black/50 shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-(--accent)/10 border border-(--accent)/30 rounded-xl">
                                         <Tag className="w-6 h-6 text-(--accent)" />
@@ -2338,7 +2381,7 @@ export default function AdminDashboard() {
                                                     {offerForm.badge && <span className="ml-2 px-1.5 py-0.5 bg-yellow-900/30 border border-yellow-700/40 text-yellow-400 rounded text-[8px] font-black">{offerForm.badge}</span>}
                                                 </p>
                                             </div>
-                                            <div className="text-right flex-shrink-0">
+                                            <div className="text-right shrink-0">
                                                 <p className="text-xs text-gray-600 line-through font-mono">${Number(offerForm.originalPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                                                 <p className="text-xl font-black text-(--accent)">${Number(offerForm.price).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-gray-500 font-mono">USDT</span></p>
                                             </div>
@@ -2348,7 +2391,7 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* ── Modal Footer ── */}
-                            <div className="flex gap-3 px-8 py-5 border-t border-gray-800/80 bg-black/50 flex-shrink-0">
+                            <div className="flex gap-3 px-8 py-5 border-t border-gray-800/80 bg-black/50 shrink-0">
                                 <button
                                     onClick={() => setShowOfferModal(false)}
                                     disabled={offerSaving}
@@ -2371,6 +2414,56 @@ export default function AdminDashboard() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* App Settings Tab */}
+            {
+                activeTab === 'settings' && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="bg-[#0f0f0f] border border-gray-800 p-8 rounded-xl w-full max-w-2xl shadow-2xl relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 left-0 w-full h-1 bg-(--accent)"></div>
+                        <h3 className="text-xl font-black text-white mb-6 tracking-widest flex items-center gap-3">
+                            <span className="text-(--accent)">SYSTEM</span> INTERNAL SETTINGS
+                        </h3>
+
+                        <form onSubmit={handleSaveSettings} className="space-y-6">
+                            <div>
+                                <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase block mb-2">Account Creation Fee (USDT)</label>
+                                <input
+                                    type="number"
+                                    value={appSettings.signupAmount}
+                                    onChange={(e) => setAppSettings({ ...appSettings, signupAmount: parseFloat(e.target.value) })}
+                                    className="w-full bg-black/50 border border-gray-800 rounded p-3 text-white focus:border-(--accent) focus:outline-none transition-colors text-sm font-bold"
+                                    required
+                                />
+                                <p className="text-[10px] text-gray-600 font-mono mt-1">This is the amount seen on the Access Protocol page.</p>
+                            </div>
+                            <div>
+                                <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase block mb-2">Minimum Deposit Amount (USDT)</label>
+                                <input
+                                    type="number"
+                                    value={appSettings.minDepositAmount}
+                                    onChange={(e) => setAppSettings({ ...appSettings, minDepositAmount: parseFloat(e.target.value) })}
+                                    className="w-full bg-black/50 border border-gray-800 rounded p-3 text-white focus:border-(--accent) focus:outline-none transition-colors text-sm font-bold"
+                                    required
+                                />
+                                <p className="text-[10px] text-gray-600 font-mono mt-1">This is the minimum deposit accepted in the Dashboard deposit form.</p>
+                            </div>
+                            <div className="pt-4">
+                                <button
+                                    type="submit"
+                                    disabled={settingsSaving}
+                                    className="w-full py-3 text-xs font-bold tracking-widest bg-(--accent) text-black hover:bg-white transition-colors rounded shadow-[0_0_15px_rgba(220,38,38,0.3)] flex justify-center items-center"
+                                >
+                                    {settingsSaving ? 'SAVING...' : 'SAVE SETTINGS'}
+                                </button>
+                            </div>
+                        </form>
+                    </motion.div>
+                )
+            }
 
         </div >
     );

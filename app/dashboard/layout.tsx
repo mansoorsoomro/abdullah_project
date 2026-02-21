@@ -25,6 +25,7 @@ export default function DashboardLayout({
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [copied, setCopied] = useState(false);
+    const [minDeposit, setMinDeposit] = useState(7000);
 
     // Notification State
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info'; id?: number } | null>(null);
@@ -51,6 +52,19 @@ export default function DashboardLayout({
     }, []);
 
     useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                if (data.settings && data.settings.minDepositAmount) {
+                    setMinDeposit(data.settings.minDepositAmount);
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings", err);
+            }
+        };
+        fetchSettings();
+
         const userData = localStorage.getItem('user');
         if (!userData) {
             router.push('/login');
@@ -87,8 +101,8 @@ export default function DashboardLayout({
 
         // Validate minimum deposit amount
         const depositAmount = parseFloat(amount);
-        if (depositAmount < 7000) {
-            setError('Minimum deposit amount is $7000 USDT');
+        if (depositAmount < minDeposit) {
+            setError(`Minimum deposit amount is $${minDeposit} USDT`);
             return;
         }
 
@@ -388,14 +402,14 @@ export default function DashboardLayout({
                                                     type="number"
                                                     value={amount}
                                                     onChange={(e) => setAmount(e.target.value)}
-                                                    placeholder="Minimum: $7000"
+                                                    placeholder={`Minimum: $${minDeposit}`}
                                                     className="w-full bg-black border border-gray-800 p-3 text-white focus:border-(--accent) focus:shadow-[0_0_15px_rgba(255,0,51,0.1)] focus:outline-none transition-all rounded font-mono font-bold"
                                                     required
-                                                    min="7000"
+                                                    min={minDeposit}
                                                     step="0.01"
                                                 />
                                                 <p className="text-[10px] text-gray-500 mt-2 font-mono tracking-wide">
-                                                    ⚠ MINIMUM DEPOSIT: $7000 USDT
+                                                    ⚠ MINIMUM DEPOSIT: ${minDeposit} USDT
                                                 </p>
                                             </div>
                                             <div>

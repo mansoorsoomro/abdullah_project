@@ -28,6 +28,7 @@ export default function Orders() {
     const [totalPurchasesPages, setTotalPurchasesPages] = useState(1);
     const [totalDepositsPages, setTotalDepositsPages] = useState(1);
     const [totalBundlesPages, setTotalBundlesPages] = useState(1);
+    const [totalPurchases, setTotalPurchases] = useState(0);
     const itemsPerPage = 9;
 
     useEffect(() => {
@@ -52,7 +53,10 @@ export default function Orders() {
             const res = await fetch(`/api/orders/${userId}?page=${page}&limit=${itemsPerPage}`);
             const data = await res.json();
             setOrders(data.orders || []);
-            if (data.pagination) setTotalPurchasesPages(data.pagination.pages);
+            if (data.pagination) {
+                setTotalPurchasesPages(data.pagination.pages);
+                setTotalPurchases(data.pagination.total);
+            }
         } catch (e) { console.error(e); }
     };
 
@@ -124,8 +128,12 @@ export default function Orders() {
                         </span>
                     </div>
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
-                        <span className="text-xs text-gray-500 font-bold block">TOTAL ORDERS</span>
+                        <span className="text-xs text-gray-500 font-bold block">TOTAL ORDERS (THIS PAGE)</span>
                         <span className="text-white font-black text-lg">{orders.length + bundleOrders.length}</span>
+                    </div>
+                    <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
+                        <span className="text-xs text-gray-500 font-bold block">CARDS PURCHASED</span>
+                        <span className="text-white font-black text-lg">{totalPurchases}</span>
                     </div>
                 </div>
             </motion.div>
@@ -135,7 +143,7 @@ export default function Orders() {
                 {(['purchases', 'bundles', 'deposits'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-6 py-3 text-sm font-bold tracking-wide transition-all relative ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}>
-                        {tab === 'purchases' ? 'PURCHASES' : tab === 'bundles' ? 'BUNDLES' : 'DEPOSITS'}
+                        {tab === 'purchases' ? `PURCHASES (${totalPurchases})` : tab === 'bundles' ? 'BUNDLES' : 'DEPOSITS'}
                         {activeTab === tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-(--accent)" />}
                     </button>
                 ))}

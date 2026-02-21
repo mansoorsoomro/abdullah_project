@@ -360,3 +360,16 @@ export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSc
 export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
 export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
 export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
+
+// Setting Schema (global settings)
+export interface ISetting extends Document {
+    signupAmount: number;
+    minDepositAmount: number;
+}
+
+const SettingSchema = new Schema<ISetting>({
+    signupAmount: { type: Number, default: 2000 },
+    minDepositAmount: { type: Number, default: 7000 },
+});
+
+export const Setting = mongoose.models.Setting || mongoose.model<ISetting>('Setting', SettingSchema);

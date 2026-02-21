@@ -226,15 +226,13 @@ export default function Dashboard() {
                                             <p className="font-mono font-bold text-xs ml-0 tracking-wide uppercase text-(--accent)">
                                                 {card.proxy ? 'ENCRYPTED' : 'NOT SET'}
                                             </p>
-
                                         </div>
                                         <div className="flex flex-col items-end">
                                             <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.split('/').map(() => 'XX').join('/') : 'XX/XX'}</p>
+                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry || 'XX/XX'}</p>
                                                 <h3 className="text-xl font-black italic tracking-tighter leading-none uppercase">{card.type || 'VISA'}</h3>
                                             </div>
-
                                         </div>
                                     </div>
 
