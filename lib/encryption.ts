@@ -85,8 +85,10 @@ export function encryptCardData(cardData: any) {
         phone: cardData.phone ? encrypt(cardData.phone) : undefined,
         password: cardData.password ? encrypt(cardData.password) : undefined,
         ip: cardData.ip ? encrypt(cardData.ip) : undefined,
+        proxy: cardData.proxy ? encrypt(cardData.proxy) : undefined,
     };
 }
+
 
 /**
  * Decrypt card data after fetching from database
@@ -104,5 +106,6 @@ export function decryptCardData(cardData: any) {
         phone: cardData.phone ? decrypt(cardData.phone) : undefined,
         password: cardData.password ? decrypt(cardData.password) : undefined,
         ip: cardData.ip ? decrypt(cardData.ip) : undefined,
+        proxy: cardData.proxy ? decrypt(cardData.proxy) : undefined,
     };
 }

@@ -21,7 +21,15 @@ export async function GET(request: NextRequest) {
             Card.countDocuments({ forSale: true })
         ]);
 
-        const formattedCards = cards.map((card: { toObject: () => any; _id: { toString: () => any; }; title: any; price: any; description: any; forSale: any; expiry: any; bank: any; type: any; zip: any; city: any; state: any; country: any; userAgent: any; videoLink: any; }) => {
+        const maskCardNumber = (num: string) => {
+            if (!num) return 'XXXX XXXX XXXX XXXX';
+            const clean = num.replace(/\s+/g, '');
+            // Show first 6 digits, asterisk the rest
+            const bin = clean.slice(0, 6);
+            return bin.padEnd(clean.length, '*');
+        };
+
+        const formattedCards = cards.map((card: any) => {
             const decrypted = decryptCardData(card.toObject());
             return {
                 id: card._id.toString(),
@@ -29,27 +37,20 @@ export async function GET(request: NextRequest) {
                 price: card.price,
                 description: card.description,
                 forSale: card.forSale,
-                cardNumber: decrypted.cardNumber, // Still decrypting, but only for the current page!
-                cvv: decrypted.cvv,
+                cardNumber: maskCardNumber(decrypted.cardNumber),
                 expiry: card.expiry,
-                holder: decrypted.holder,
-                address: decrypted.address,
                 bank: card.bank,
                 type: card.type,
                 zip: card.zip,
                 city: card.city,
                 state: card.state,
                 country: card.country,
-                ssn: decrypted.ssn,
-                dob: decrypted.dob,
-                email: decrypted.email,
-                phone: decrypted.phone,
                 userAgent: card.userAgent,
-                password: decrypted.password,
-                ip: decrypted.ip,
-                videoLink: card.videoLink
+                videoLink: card.videoLink,
+                proxy: card.proxy
             };
         });
+
 
         return NextResponse.json({
             cards: formattedCards,

@@ -96,10 +96,13 @@ export default function Dashboard() {
 
     // Card number: show last 4
     const formatCardNumber = (num: string) => {
-        if (!num) return '**** **** **** 0000';
-        const last4 = num.slice(-4);
-        return `**** **** **** ${last4}`;
+        if (!num) return 'XXXX XXXX XXXX XXXX';
+        const clean = num.replace(/\s+/g, '');
+        // Split into blocks of 4 for standard CC format
+        const matches = clean.match(/.{1,4}/g);
+        return matches ? matches.join(' ') : clean;
     };
+
 
     if (loading && cards.length === 0) {
         return (
@@ -209,23 +212,29 @@ export default function Dashboard() {
 
                                     {/* Card Number */}
                                     <div className="mt-2" style={{ padding: "10px" }}>
+                                        <p className="text-xs font-bold text-gray-500 mb-1 tracking-widest uppercase">{card.bank || 'DIGITAL ASSET'}</p>
                                         <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
-                                            {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
+                                            {formatCardNumber(card.cardNumber)}
                                         </p>
+
                                     </div>
 
                                     {/* Bottom Info */}
                                     <div className="flex justify-between items-end mt-2 px-3" style={{ padding: "12px" }}>
                                         <div>
-                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
-                                            <p className="font-mono font-bold text-xs ml-3 tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
+                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Proxy Status</p>
+                                            <p className="font-mono font-bold text-xs ml-0 tracking-wide uppercase text-(--accent)">
+                                                {card.proxy ? 'ENCRYPTED' : 'NOT SET'}
+                                            </p>
+
                                         </div>
                                         <div className="flex flex-col items-end">
                                             <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
-                                                <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
+                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.split('/').map(() => 'XX').join('/') : 'XX/XX'}</p>
+                                                <h3 className="text-xl font-black italic tracking-tighter leading-none uppercase">{card.type || 'VISA'}</h3>
                                             </div>
+
                                         </div>
                                     </div>
 
@@ -258,7 +267,8 @@ export default function Dashboard() {
                                             <div className="h-0.5 w-32 bg-white/20"></div>
                                         </div>
                                         <div className="text-right">
-                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
+                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80 uppercase">{card.type || 'VISA'}</h3>
+
                                         </div>
                                     </div>
 

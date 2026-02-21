@@ -31,7 +31,9 @@ export interface Card {
     password?: string;
     ip?: string;
     videoLink?: string;
+    proxy?: string;
 }
+
 
 export interface Order {
     _id?: string;
@@ -39,10 +41,30 @@ export interface Order {
     userId: string;
     cardId: string;
     cardTitle: string;
-    cardNumber?: string;
+    cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
     price: number;
     purchaseDate: Date | string;
 }
+
 
 export interface Payment {
     paymentId: string;

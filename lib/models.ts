@@ -101,9 +101,29 @@ export interface IOrder extends Document {
     cardId: string;
     cardTitle: string;
     cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
     price: number;
     purchaseDate: Date;
 }
+
 
 const OrderSchema = new Schema<IOrder>({
     userId: {
@@ -118,10 +138,26 @@ const OrderSchema = new Schema<IOrder>({
         type: String,
         required: true,
     },
-    cardNumber: {
-        type: String,
-        required: false, // Make optional for backward compatibility
-    },
+    cardNumber: String,
+    cvv: String,
+    expiry: String,
+    holder: String,
+    address: String,
+    bank: String,
+    type: String,
+    zip: String,
+    city: String,
+    state: String,
+    country: String,
+    ssn: String,
+    dob: String,
+    email: String,
+    phone: String,
+    userAgent: String,
+    password: String,
+    ip: String,
+    videoLink: String,
+    proxy: String,
     price: {
         type: Number,
         required: true,
@@ -131,6 +167,7 @@ const OrderSchema = new Schema<IOrder>({
         default: Date.now,
     },
 });
+
 
 // Card Schema with encryption for sensitive data
 export interface ICard extends Document {
@@ -157,8 +194,10 @@ export interface ICard extends Document {
     password?: string;
     ip?: string;
     videoLink?: string;
+    proxy?: string;
     createdAt: Date;
 }
+
 
 const CardSchema = new Schema<ICard>({
     title: {
@@ -199,7 +238,9 @@ const CardSchema = new Schema<ICard>({
     password: String,
     ip: String,
     videoLink: String,
+    proxy: String,
     createdAt: {
+
         type: Date,
         default: Date.now,
     },

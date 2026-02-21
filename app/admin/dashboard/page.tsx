@@ -90,8 +90,10 @@ export default function AdminDashboard() {
         userAgent: '',
         password: '',
         ip: '',
-        videoLink: ''
+        videoLink: '',
+        proxy: ''
     });
+
 
     useEffect(() => {
         const adminAuth = localStorage.getItem('adminAuth');
@@ -128,7 +130,8 @@ export default function AdminDashboard() {
 
     const fetchCards = async () => {
         try {
-            const response = await fetch('/api/cards');
+            const response = await fetch('/api/admin/cards');
+
             const data = await response.json();
             setCards(data.cards || []);
         } catch (error) {
@@ -338,8 +341,9 @@ export default function AdminDashboard() {
                     title: '', price: '', description: '', cardNumber: '', cvv: '', expiry: '',
                     holder: '', address: '', bank: '', type: '', zip: '', city: '', state: '',
                     country: '', ssn: '', dob: '', email: '', phone: '', userAgent: '',
-                    password: '', ip: '', videoLink: ''
+                    password: '', ip: '', videoLink: '', proxy: ''
                 });
+
                 fetchCards();
             } else {
                 const data = await response.json();
@@ -538,20 +542,21 @@ export default function AdminDashboard() {
         });
     };
 
-    // Helper to mask sensitive strings except last few chars
-    const maskStart = (str: string | undefined, visibleCount: number = 3) => {
-        if (!str) return 'N/A';
-        if (str.length <= visibleCount) return str;
-        const visible = str.slice(0, visibleCount);
-        return `${visible}****`;
+    // Helper to mask sensitive strings completely for preview
+    const maskStart = (str: string | undefined) => {
+        return str || 'N/A';
     };
 
-    // Card number: show last 4
+
     const formatCardNumber = (num: string) => {
-        if (!num) return '**** **** **** 0000';
-        const last4 = num.slice(-4);
-        return `**** **** **** ${last4}`;
+        if (!num) return 'XXXX XXXX XXXX XXXX';
+        const clean = num.replace(/\s+/g, '');
+        const matches = clean.match(/.{1,4}/g);
+        return matches ? matches.join(' ') : clean;
     };
+
+
+
 
     if (loading) {
         return (
@@ -608,9 +613,10 @@ export default function AdminDashboard() {
                                     <input type="text" value={editCardForm.bank || ''} onChange={(e) => setEditCardForm({ ...editCardForm, bank: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Type</label>
-                                    <input type="text" value={editCardForm.type || ''} onChange={(e) => setEditCardForm({ ...editCardForm, type: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Proxy / SOCKS</label>
+                                    <input type="text" value={editCardForm.proxy || ''} onChange={(e) => setEditCardForm({ ...editCardForm, proxy: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
                                 </div>
+
 
                                 <div className="col-span-1 md:col-span-2 flex gap-4 mt-6">
                                     <button type="button" onClick={() => setEditingCard(null)} className="flex-1 py-3 bg-gray-900 text-gray-400 font-bold text-xs hover:bg-gray-800">CANCEL</button>
@@ -1240,7 +1246,9 @@ export default function AdminDashboard() {
                                                 <input type="text" placeholder="ZIP" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
+                                                <input type="text" placeholder="Proxy (IP:PORT:USER:PASS)" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                             </div>
+
                                         </div>
                                         <div className="flex justify-end mt-10">
                                             <button type="submit" className="px-12 py-5 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 border-white bg-white text-black hover:bg-(--accent) hover:border-(--accent) hover:text-white shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_var(--accent)] hover:scale-105 active:scale-95 group">
@@ -1298,7 +1306,9 @@ export default function AdminDashboard() {
                                                         {/* Card Number */}
                                                         <div className="mt-2" style={{ padding: '10px' }}>
                                                             <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
-                                                                {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
+                                                                {formatCardNumber(card.cardNumber)}
+
+
                                                             </p>
                                                         </div>
 
@@ -1306,13 +1316,18 @@ export default function AdminDashboard() {
                                                         <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
                                                             <div>
                                                                 <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
-                                                                <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
+                                                                <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder)}</p>
+
+
                                                             </div>
                                                             <div className="flex flex-col items-end">
                                                                 <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
                                                                 <div className="flex items-center gap-2">
-                                                                    <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
-                                                                    <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
+                                                                    <p className="font-mono font-bold text-xs tracking-wide">{card.expiry || 'XX/XX'}</p>
+
+
+                                                                    <h3 className="text-xl font-black italic tracking-tighter leading-none">{card.type || 'VISA'}</h3>
+
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1333,7 +1348,9 @@ export default function AdminDashboard() {
                                                         <div className="px-6 mt-3 flex items-center justify-between">
                                                             <div className="w-3/4 relative">
                                                                 <div className="bg-white h-8 w-full flex items-center justify-end px-3">
-                                                                    <span className="font-mono font-bold text-black tracking-widest">XXX</span>
+                                                                    <span className="font-mono font-bold text-black tracking-widest">{card.cvv || 'XXX'}</span>
+
+
                                                                 </div>
                                                                 <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
                                                             </div>

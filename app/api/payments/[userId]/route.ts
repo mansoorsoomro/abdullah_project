@@ -16,7 +16,10 @@ export async function GET(
         await connectDB();
         const user = await User.findById(userId);
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({
+                payments: [],
+                pagination: { total: 0, pages: 0, current: page }
+            });
         }
 
         const query = {

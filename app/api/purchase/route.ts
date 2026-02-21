@@ -42,8 +42,28 @@ export async function POST(req: NextRequest) {
             cardId,
             cardTitle: card.title,
             cardNumber: card.cardNumber,
+            cvv: card.cvv,
+            expiry: card.expiry,
+            holder: card.holder,
+            address: card.address,
+            bank: card.bank,
+            type: card.type,
+            zip: card.zip,
+            city: card.city,
+            state: card.state,
+            country: card.country,
+            ssn: card.ssn,
+            dob: card.dob,
+            email: card.email,
+            phone: card.phone,
+            userAgent: card.userAgent,
+            password: card.password,
+            ip: card.ip,
+            videoLink: card.videoLink,
+            proxy: card.proxy,
             price: card.price,
         });
+
 
         return NextResponse.json({
             success: true,
