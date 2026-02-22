@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
 import mongoose from 'mongoose';

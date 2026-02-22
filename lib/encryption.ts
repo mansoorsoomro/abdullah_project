@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import crypto from 'crypto';
 
 // Encryption configuration
@@ -43,8 +44,8 @@ export function decrypt(text: any): string {
         if (iv.length !== 16) {
             return text;
         }
-
         const encryptedText = parts[1];
+
         const decipher = crypto.createDecipheriv('aes-256-cbc', getEncryptionKey(), iv);
 
         let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
@@ -52,6 +53,7 @@ export function decrypt(text: any): string {
 
         return decrypted;
     } catch (error) {
+        console.error('Decryption error:', error);
         return typeof text === 'string' ? text : '';
     }
 }
@@ -88,7 +90,6 @@ export function encryptCardData(cardData: any) {
         type: cardData.type ? encrypt(cardData.type) : undefined,
     };
 }
-
 
 /**
  * Decrypt card data after fetching from database

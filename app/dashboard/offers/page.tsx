@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tag, Layers, Server, ShieldCheck, Database, Zap, Loader2, PackageX, AlertTriangle, CheckCircle, X } from 'lucide-react';

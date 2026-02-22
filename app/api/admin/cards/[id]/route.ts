@@ -24,37 +24,3 @@ export async function DELETE(
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
-export async function PUT(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await params;
-        await connectDB();
-        const cardData = await req.json();
-
-        // Encrypt sensitive data before saving if any were provided
-        // We import it here as needed or at the top
-        const { encryptCardData } = require('../../../../../lib/encryption');
-        const encryptedData = encryptCardData(cardData);
-
-        const card = await Card.findByIdAndUpdate(id, encryptedData, { new: true });
-
-        if (!card) {
-            return NextResponse.json({ error: 'Card not found' }, { status: 404 });
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: 'Card updated successfully',
-            card: {
-                id: card._id.toString(),
-                title: card.title,
-                price: card.price
-            }
-        });
-    } catch (error) {
-        console.error('Update card error:', error);
-        return NextResponse.json({ error: 'Server error' }, { status: 500 });
-    }
-}

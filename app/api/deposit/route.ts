@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
-import { Payment, Setting } from '../../../lib/models';
+import { Payment } from '../../../lib/models';
 
 export async function POST(req: NextRequest) {
     try {
@@ -9,13 +9,6 @@ export async function POST(req: NextRequest) {
 
         if (!userId || !trxId || !amount) {
             return NextResponse.json({ error: 'User ID, TRX ID and Amount are required' }, { status: 400 });
-        }
-
-        let settings = await Setting.findOne();
-        const minDeposit = settings ? settings.minDepositAmount : 7000;
-
-        if (parseFloat(amount) < minDeposit) {
-            return NextResponse.json({ error: `Amount is below the minimum required deposit of $${minDeposit}.` }, { status: 400 });
         }
 
         const existingPayment = await Payment.findOne({ trxId });

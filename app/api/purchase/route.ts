@@ -93,8 +93,6 @@ export async function POST(req: NextRequest) {
             bank: decrypt(orderData.bank),
             type: decrypt(orderData.type),
         };
-
-
         return NextResponse.json({
             success: true,
             message: 'Purchase successful',

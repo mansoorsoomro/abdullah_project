@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
-import { Payment, Setting } from '../../../lib/models';
+import { Payment } from '../../../lib/models';
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,13 +11,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'TRX ID and Amount are required' }, { status: 400 });
         }
 
-        let settings = await Setting.findOne();
-        if (!settings) {
-            settings = { signupAmount: 2000 };
-        }
-
-        if (parseFloat(amount) !== settings.signupAmount) {
-            return NextResponse.json({ error: `Invalid amount. Access fee is exactly $${settings.signupAmount}.` }, { status: 400 });
+        if (parseFloat(amount) !== 2000) {
+            return NextResponse.json({ error: 'Invalid amount. Access fee is exactly $2000.' }, { status: 400 });
         }
 
         const existingPayment = await Payment.findOne({ trxId });

@@ -12,7 +12,7 @@ export async function GET(
         const user = await User.findById(id);
 
         if (!user) {
-            return NextResponse.json({ user: null });
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
         return NextResponse.json({

@@ -126,7 +126,6 @@ export interface IOrder extends Document {
     purchaseDate: Date;
 }
 
-
 const OrderSchema = new Schema<IOrder>({
     userId: {
         type: String,
@@ -140,7 +139,10 @@ const OrderSchema = new Schema<IOrder>({
         type: String,
         required: true,
     },
-    cardNumber: String,
+    cardNumber: {
+        type: String,
+        required: false, // Make optional for backward compatibility
+    },
     cvv: String,
     expiry: String,
     holder: String,
@@ -172,7 +174,6 @@ const OrderSchema = new Schema<IOrder>({
     },
 });
 
-
 // Card Schema with encryption for sensitive data
 export interface ICard extends Document {
     title: string;
@@ -202,7 +203,6 @@ export interface ICard extends Document {
     soldAt?: Date;
     createdAt: Date;
 }
-
 
 const CardSchema = new Schema<ICard>({
     title: {
@@ -243,65 +243,30 @@ const CardSchema = new Schema<ICard>({
     password: String,
     ip: String,
     videoLink: String,
-    proxy: String,
     createdAt: {
-
         type: Date,
         default: Date.now,
     },
 });
 
-// Activity Log Schema
+// ActivityLog Schema
 export interface IActivityLog extends Document {
     userId: string;
     action: string;
-    details?: string;
+    details: string;
     ip?: string;
     createdAt: Date;
 }
 
 const ActivityLogSchema = new Schema<IActivityLog>({
-    userId: {
-        type: String,
-        required: true,
-        index: true, // Optimizes filtering logs by user
-    },
-    action: {
-        type: String,
-        required: true,
-    },
-    details: {
-        type: String,
-        default: '',
-    },
-    ip: {
-        type: String,
-        default: '',
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        index: true, // Optimizes sorting by date
-    },
+    userId: { type: String, required: true },
+    action: { type: String, required: true },
+    details: { type: String, required: true },
+    ip: { type: String, required: false },
+    createdAt: { type: Date, default: Date.now },
 });
 
-// Create indexes for efficient querying
-UserSchema.index({ email: 1 });
-UserSchema.index({ username: 1 });
-UserSchema.index({ trxId: 1 });
-
-PaymentSchema.index({ userId: 1, createdAt: -1 }); // Optimize payment history queries
-PaymentSchema.index({ type: 1, status: 1 }); // Optimize filtering by type and status
-PaymentSchema.index({ trxId: 1 });
-
-OrderSchema.index({ userId: 1, purchaseDate: -1 }); // Optimize order history queries
-
-CardSchema.index({ forSale: 1, createdAt: -1 }); // Optimize marketplace listings
-CardSchema.index({ price: 1 }); // Optimize sorting by price
-
-ActivityLogSchema.index({ userId: 1, createdAt: -1 }); // Optimize log history queries
-
-// Bundle Order Schema
+// BundleOrder Schema
 export interface IBundleOrder extends Document {
     userId: string;
     username: string;
@@ -314,7 +279,7 @@ export interface IBundleOrder extends Document {
 }
 
 const BundleOrderSchema = new Schema<IBundleOrder>({
-    userId: { type: String, required: true, index: true },
+    userId: { type: String, required: true },
     username: { type: String, required: true },
     bundleTitle: { type: String, required: true },
     cardCount: { type: Number, required: true },
@@ -324,20 +289,18 @@ const BundleOrderSchema = new Schema<IBundleOrder>({
     purchaseDate: { type: Date, default: Date.now },
 });
 
-BundleOrderSchema.index({ userId: 1, purchaseDate: -1 });
-
-// ─── Offer Schema (admin-managed) ─────────────────────────────────────
+// Offer Schema
 export interface IOffer extends Document {
     title: string;
     description: string;
     cardCount: number;
-    discount: number;          // percent e.g. 20
+    discount: number;
     originalPrice: number;
     price: number;
     avgPricePerCard: number;
-    badge?: string;            // e.g. "BEST VALUE"
+    badge: string;
     isActive: boolean;
-    styleIndex: number;        // 0-5 for colour theme
+    styleIndex: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -355,7 +318,16 @@ const OfferSchema = new Schema<IOffer>({
     styleIndex: { type: Number, default: 0 },
 }, { timestamps: true });
 
-OfferSchema.index({ isActive: 1, createdAt: -1 });
+// Setting Schema
+export interface ISetting extends Document {
+    signupAmount: number;
+    minDepositAmount: number;
+}
+
+const SettingSchema = new Schema<ISetting>({
+    signupAmount: { type: Number, required: true, default: 2000 },
+    minDepositAmount: { type: Number, required: true, default: 7000 },
+});
 
 // Export Models (Safe Check)
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
@@ -365,16 +337,4 @@ export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSc
 export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
 export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
 export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
-
-// Setting Schema (global settings)
-export interface ISetting extends Document {
-    signupAmount: number;
-    minDepositAmount: number;
-}
-
-const SettingSchema = new Schema<ISetting>({
-    signupAmount: { type: Number, default: 2000 },
-    minDepositAmount: { type: Number, default: 7000 },
-});
-
 export const Setting = mongoose.models.Setting || mongoose.model<ISetting>('Setting', SettingSchema);

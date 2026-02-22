@@ -9,21 +9,8 @@ export async function GET(
 ) {
     try {
         const { userId } = await params;
-        const { searchParams } = new URL(req.url);
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '9');
-        const skip = (page - 1) * limit;
-
         await connectDB();
-
-        const [userOrders, total] = await Promise.all([
-            Order.find({ userId })
-                .sort({ purchaseDate: -1 })
-                .skip(skip)
-                .limit(limit),
-            Order.countDocuments({ userId })
-        ]);
-
+        const userOrders = await Order.find({ userId }).sort({ purchaseDate: -1 });
 
         const formattedOrders = userOrders.map((order: any) => {
             const data = order.toObject();
@@ -59,15 +46,8 @@ export async function GET(
             };
         });
 
-
-
         return NextResponse.json({
-            orders: formattedOrders,
-            pagination: {
-                total,
-                pages: Math.ceil(total / limit),
-                current: page
-            }
+            orders: formattedOrders
         });
     } catch (error) {
         console.error('Get orders error:', error);
