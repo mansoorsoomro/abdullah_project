@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -25,7 +24,7 @@ export default function DashboardLayout({
     const [success, setSuccess] = useState('');
     const [copied, setCopied] = useState(false);
 
-    
+    // Notification State
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     const router = useRouter();
@@ -352,7 +351,7 @@ export default function DashboardLayout({
                     <footer className="border-t border-(--border) mt-20 bg-black/80 backdrop-blur-sm">
                         <div className="container mx-auto px-4 py-8" style={{ padding: '32px 24px' }}>
                             <p className="text-center text-xs text-gray-500 font-mono tracking-widest">
-                                WARZONE PROTOCOL <span className="text-(--accent)">v2.0</span> {"// ENCRYPTED CONNECTION"}
+                                WARZONE PROTOCOL <span className="text-(--accent)">v2.0</span> // ENCRYPTED CONNECTION
                             </p>
                         </div>
                     </footer>

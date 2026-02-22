@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,13 +33,6 @@ export default function AdminDashboard() {
     const [editingOrder, setEditingOrder] = useState<any | null>(null);
     const [editOrderForm, setEditOrderForm] = useState<any>({});
 
-    // Edit Card State
-    const [editingCard, setEditingCard] = useState<any | null>(null);
-    const [editCardForm, setEditCardForm] = useState<any>({});
-
-    const [cardsPage, setCardsPage] = useState(1);
-    const cardsPerPage = 40;
-
     // Form state for new card
     const [newCard, setNewCard] = useState({
         title: '',
@@ -61,7 +53,6 @@ export default function AdminDashboard() {
         dob: '',
         email: '',
         phone: '',
-        proxy: '',
         userAgent: '',
         password: '',
         ip: '',
@@ -185,7 +176,7 @@ export default function AdminDashboard() {
                 setNewCard({
                     title: '', price: '', description: '', cardNumber: '', cvv: '', expiry: '',
                     holder: '', address: '', bank: '', type: '', zip: '', city: '', state: '',
-                    country: '', ssn: '', dob: '', email: '', phone: '', proxy: '', userAgent: '',
+                    country: '', ssn: '', dob: '', email: '', phone: '', userAgent: '',
                     password: '', ip: '', videoLink: ''
                 });
                 fetchCards();
@@ -259,48 +250,6 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleUpdateCard = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editCardForm || !editCardForm.id) return;
-
-        try {
-            const response = await fetch(`/api/admin/cards/${editCardForm.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: editCardForm.title,
-                    price: editCardForm.price,
-                    cardNumber: editCardForm.cardNumber,
-                    cvv: editCardForm.cvv,
-                    expiry: editCardForm.expiry,
-                    holder: editCardForm.holder,
-                    address: editCardForm.address,
-                    bank: editCardForm.bank,
-                    type: editCardForm.type,
-                    zip: editCardForm.zip,
-                    city: editCardForm.city,
-                    state: editCardForm.state,
-                    country: editCardForm.country,
-                    ssn: editCardForm.ssn,
-                    dob: editCardForm.dob,
-                    email: editCardForm.email,
-                    phone: editCardForm.phone,
-                    proxy: editCardForm.proxy,
-                }),
-            });
-
-            if (response.ok) {
-                showNotification('✓ Card updated successfully!', 'success');
-                setEditingCard(null);
-                fetchCards();
-            } else {
-                showNotification('Failed to update card', 'error');
-            }
-        } catch (error) {
-            showNotification('Failed to update card', 'error');
-        }
-    };
-
     const handleLogout = () => {
         localStorage.removeItem('adminAuth');
         router.push('/admin');
@@ -343,98 +292,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-black relative overflow-hidden selection:bg-red-500/30">
-            {/* Edit Card Modal */}
-            <AnimatePresence>
-                {editingCard && (
-                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-[#0f0f0f] border border-gray-800 p-8 rounded-xl w-full max-w-2xl shadow-2xl relative my-10"
-                        >
-                            <div className="absolute top-0 left-0 w-full h-1 bg-(--accent)"></div>
-                            <h3 className="text-xl font-black text-white mb-6 tracking-widest flex items-center gap-3">
-                                <span className="text-(--accent)">EDIT</span> ASSET
-                            </h3>
-
-                            <form onSubmit={handleUpdateCard} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="col-span-1 md:col-span-2 space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Title</label>
-                                    <input type="text" value={editCardForm.title || ''} onChange={(e) => setEditCardForm({ ...editCardForm, title: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Price</label>
-                                    <input type="number" value={editCardForm.price || ''} onChange={(e) => setEditCardForm({ ...editCardForm, price: parseFloat(e.target.value) })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Card Number</label>
-                                    <input type="text" value={editCardForm.cardNumber || ''} onChange={(e) => setEditCardForm({ ...editCardForm, cardNumber: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                {/* Additional Fields */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Expiry</label>
-                                    <input type="text" value={editCardForm.expiry || ''} onChange={(e) => setEditCardForm({ ...editCardForm, expiry: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">CVV</label>
-                                    <input type="text" value={editCardForm.cvv || ''} onChange={(e) => setEditCardForm({ ...editCardForm, cvv: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Balance/Limit</label>
-                                    <input type="text" value={editCardForm.bank || ''} onChange={(e) => setEditCardForm({ ...editCardForm, bank: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Email</label>
-                                    <input type="email" value={editCardForm.email || ''} onChange={(e) => setEditCardForm({ ...editCardForm, email: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Proxy / SOCKS</label>
-                                    <input type="text" value={editCardForm.proxy || ''} onChange={(e) => setEditCardForm({ ...editCardForm, proxy: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">DOB</label>
-                                    <input type="text" value={editCardForm.dob || ''} onChange={(e) => setEditCardForm({ ...editCardForm, dob: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Phone</label>
-                                    <input type="text" value={editCardForm.phone || ''} onChange={(e) => setEditCardForm({ ...editCardForm, phone: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Address</label>
-                                    <input type="text" value={editCardForm.address || ''} onChange={(e) => setEditCardForm({ ...editCardForm, address: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">City</label>
-                                    <input type="text" value={editCardForm.city || ''} onChange={(e) => setEditCardForm({ ...editCardForm, city: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">State</label>
-                                    <input type="text" value={editCardForm.state || ''} onChange={(e) => setEditCardForm({ ...editCardForm, state: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">ZIP</label>
-                                    <input type="text" value={editCardForm.zip || ''} onChange={(e) => setEditCardForm({ ...editCardForm, zip: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Type</label>
-                                    <input type="text" value={editCardForm.type || ''} onChange={(e) => setEditCardForm({ ...editCardForm, type: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">SSN</label>
-                                    <input type="text" value={editCardForm.ssn || ''} onChange={(e) => setEditCardForm({ ...editCardForm, ssn: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-
-
-                                <div className="col-span-1 md:col-span-2 flex gap-4 mt-6">
-                                    <button type="button" onClick={() => setEditingCard(null)} className="flex-1 py-3 bg-gray-900 text-gray-400 font-bold text-xs hover:bg-gray-800">CANCEL</button>
-                                    <button type="submit" className="flex-1 py-3 bg-(--accent) text-black font-bold text-xs hover:bg-white">SAVE CHANGES</button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
             {/* Background Animation */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <AdminGridBackground />
@@ -979,10 +836,6 @@ export default function AdminDashboard() {
                                                 <input type="text" placeholder="ZIP" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Date of Birth" value={newCard.dob} onChange={(e) => setNewCard({ ...newCard, dob: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Phone Number" value={newCard.phone} onChange={(e) => setNewCard({ ...newCard, phone: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="email" placeholder="Email : Enter your Email" value={newCard.email} onChange={(e) => setNewCard({ ...newCard, email: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Proxy (IP:PORT:USER:PASS)" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                             </div>
                                         </div>
                                         <div className="flex justify-end mt-10">
@@ -998,154 +851,114 @@ export default function AdminDashboard() {
 
                             {/* Cards List */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {cards
-                                    .sort((a: Card, b: Card) => {
-                                        // Available cards first
-                                        if (a.forSale && !b.forSale) return -1;
-                                        if (!a.forSale && b.forSale) return 1;
+                                {cards.map((card, index) => (
+                                    <motion.div
+                                        key={card.id}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        className="group relative perspective-[1000px] h-[240px]"
+                                        style={{ padding: '0' }}
+                                    >
+                                        {/* 3D Card Container */}
+                                        <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
 
-                                        // If both are available, newest first
-                                        if (a.forSale && b.forSale) {
-                                            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-                                        }
+                                            {/* FRONT SIDE (Blue Card) */}
+                                            <div className="absolute inset-0 backface-hidden">
+                                                <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
 
-                                        // If both are sold, sort by sold date (newest sold at bottom? "arranged according to purchased time")
-                                        // The user said: "arranged according to purchased time or date" and "It will show at the end"
-                                        // So for sold cards, we sort them among themselves by soldAt descending, but they are already after forSale cards.
-                                        return new Date(b.soldAt || b.updatedAt || 0).getTime() - new Date(a.soldAt || a.updatedAt || 0).getTime();
-                                    })
-                                    .slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)
-                                    .map((card, index) => (
-                                        <motion.div
-                                            key={card.id}
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: card.forSale ? 1 : 0.6, scale: 1 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className={`group relative perspective-[1000px] h-[240px] ${!card.forSale ? 'grayscale-[0.5] opacity-60' : ''}`}
-                                            style={{ padding: '0' }}
-                                        >
-                                            {/* 3D Card Container */}
-                                            <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
+                                                    {/* Background texture */}
+                                                    <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
+                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
-                                                {/* FRONT SIDE (Blue Card) */}
-                                                <div className="absolute inset-0 backface-hidden">
-                                                    <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
-
-                                                        {/* Background texture */}
-                                                        <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
-                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-
-                                                        {!card.forSale && (
-                                                            <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-                                                                <div className="bg-white/95 px-6 py-4 rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.4)] skew-x-[-10deg] border-2 border-white">
-                                                                    <p className="text-black font-black text-xs uppercase tracking-tighter skew-x-10 flex flex-col items-center">
-                                                                        <span className="text-[10px] opacity-70">ASSET SECURED</span>
-                                                                        <span className="text-base text-red-600 font-black">SOLD ON</span>
-                                                                        <span className="font-mono mt-1 pt-1 border-t border-black/10">{formatDate(card.soldAt || card.updatedAt || new Date(0))}</span>
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Top Row: Chip and Price */}
-                                                        <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
-                                                            <div className="w-12 h-9 bg-yellow-400 rounded-md shadow-sm border border-yellow-500/50 relative overflow-hidden flex items-center justify-center">
-                                                                <div className="grid grid-cols-2 gap-1 w-full h-full p-[2px] opacity-50">
-                                                                    <div className="border border-black/20 rounded-sm"></div>
-                                                                    <div className="border border-black/20 rounded-sm"></div>
-                                                                    <div className="border border-black/20 rounded-sm"></div>
-                                                                    <div className="border border-black/20 rounded-sm"></div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="flex flex-col items-end gap-1">
-                                                                <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
-                                                                    {card.price} USDT
-                                                                </div>
+                                                    {/* Top Row: Chip and Price */}
+                                                    <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
+                                                        <div className="w-12 h-9 bg-yellow-400 rounded-md shadow-sm border border-yellow-500/50 relative overflow-hidden flex items-center justify-center">
+                                                            <div className="grid grid-cols-2 gap-1 w-full h-full p-[2px] opacity-50">
+                                                                <div className="border border-black/20 rounded-sm"></div>
+                                                                <div className="border border-black/20 rounded-sm"></div>
+                                                                <div className="border border-black/20 rounded-sm"></div>
+                                                                <div className="border border-black/20 rounded-sm"></div>
                                                             </div>
                                                         </div>
 
-                                                        {/* Card Number */}
-                                                        <div className="mt-2" style={{ padding: '10px' }}>
-                                                            <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
-                                                                {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Bottom Info */}
-                                                        <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
-                                                            <div>
-                                                                <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
-                                                                <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
+                                                                {card.price} USDT
                                                             </div>
-                                                            <div className="flex flex-col items-end">
-                                                                <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
-                                                                <div className="flex items-center gap-2">
-                                                                    <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
-                                                                    <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Shine overlay */}
-                                                        <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl mix-blend-overlay"></div>
-                                                    </div>
-                                                </div>
-
-                                                {/* BACK SIDE (Dark Card) */}
-                                                <div className="absolute inset-0 backface-hidden rotate-y-180">
-                                                    <div className="relative w-full h-full bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden border border-gray-800 flex flex-col">
-
-                                                        {/* Magnetic Strip */}
-                                                        <div className="w-full h-10 bg-black mt-5"></div>
-
-                                                        {/* CVC Section */}
-                                                        <div className="px-6 mt-3 flex items-center justify-between">
-                                                            <div className="w-3/4 relative">
-                                                                <div className="bg-white h-8 w-full flex items-center justify-end px-3">
-                                                                    <span className="font-mono font-bold text-black tracking-widest">XXX</span>
-                                                                </div>
-                                                                <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Bottom Logo & Action */}
-                                                        <div className="flex-1 flex items-end justify-between px-6 pb-4">
-                                                            <div className="flex flex-col gap-1">
-                                                                <div className="text-[8px] text-gray-500">Authorized Signature</div>
-                                                                <div className="h-0.5 w-32 bg-white/20"></div>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Action Buttons Overlay */}
-                                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-[2px] z-10">
-                                                            {card.forSale && (
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setEditingCard(card);
-                                                                        setEditCardForm(card);
-                                                                    }}
-                                                                    className="px-6 py-2 w-[180px] bg-white text-black text-xs font-black rounded hover:bg-gray-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.5)] uppercase tracking-widest flex justify-center items-center gap-2"
-                                                                >
-                                                                    <span>✎ EDIT ASSET</span>
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                onClick={() => handleDeleteCard(card.id)}
-                                                                className="px-6 py-2 w-[180px] bg-red-600 text-white text-xs font-black rounded hover:bg-red-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] uppercase tracking-widest flex justify-center items-center gap-2"
-                                                            >
-                                                                <span>✕ DELETE ASSET</span>
-                                                            </button>
                                                         </div>
                                                     </div>
-                                                </div>
 
+                                                    {/* Card Number */}
+                                                    <div className="mt-2" style={{ padding: '10px' }}>
+                                                        <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
+                                                            {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Bottom Info */}
+                                                    <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
+                                                        <div>
+                                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
+                                                            <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
+                                                        </div>
+                                                        <div className="flex flex-col items-end">
+                                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
+                                                                <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Shine overlay */}
+                                                    <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl mix-blend-overlay"></div>
+                                                </div>
                                             </div>
-                                        </motion.div>
-                                    ))}
+
+                                            {/* BACK SIDE (Dark Card) */}
+                                            <div className="absolute inset-0 backface-hidden rotate-y-180">
+                                                <div className="relative w-full h-full bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden border border-gray-800 flex flex-col">
+
+                                                    {/* Magnetic Strip */}
+                                                    <div className="w-full h-10 bg-black mt-5"></div>
+
+                                                    {/* CVC Section */}
+                                                    <div className="px-6 mt-3 flex items-center justify-between">
+                                                        <div className="w-3/4 relative">
+                                                            <div className="bg-white h-8 w-full flex items-center justify-end px-3">
+                                                                <span className="font-mono font-bold text-black tracking-widest">XXX</span>
+                                                            </div>
+                                                            <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Bottom Logo & Action */}
+                                                    <div className="flex-1 flex items-end justify-between px-6 pb-4">
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="text-[8px] text-gray-500">Authorized Signature</div>
+                                                            <div className="h-0.5 w-32 bg-white/20"></div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Delete Button Overlay */}
+                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-[2px] z-10">
+                                                        <button
+                                                            onClick={() => handleDeleteCard(card.id)}
+                                                            className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded hover:bg-red-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] uppercase tracking-widest flex items-center gap-2"
+                                                        >
+                                                            <span>✕ DELETE ASSET</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </div>
 
                             {cards.length === 0 && !showAddCard && (
@@ -1246,62 +1059,59 @@ export default function AdminDashboard() {
                                     <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-(--accent) to-transparent opacity-50"></div>
 
                                     {/* Table Header - Improved Alignment and Visibility */}
-                                    <div className="grid grid-cols-12 p-5 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap gap-4">
-                                        <div className="col-span-3">ITEM SOLD</div>
-                                        <div className="col-span-1 text-center">PRICE</div>
-                                        <div className="col-span-3 text-center">PURCHASER NAME</div>
-                                        <div className="col-span-2 text-center">PURCHASER GMAIL</div>
-                                        <div className="col-span-2 text-right">DATE & TIME</div>
-                                        <div className="col-span-1 text-right">ACTIONS</div>
+                                    <div className="grid grid-cols-5 p-4 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap">
+                                        <div className="col-span-2">ITEM SOLD</div>
+                                        <div className="text-center">PRICE</div>
+                                        <div className="text-center">BUYER ID</div>
+                                        <div className="text-right">DATE & TIME</div>
+                                        <div className="text-right">ACTIONS</div>
                                     </div>
 
                                     {/* Table Body - Better spacing and hover effects */}
                                     <div className="divide-y divide-white/5">
                                         {orders
                                             .slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
-                                            .map((order: Order, index: number) => (
+                                            .map((order, index) => (
                                                 <motion.div
                                                     key={order.id}
                                                     initial={{ opacity: 0, x: -10 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     transition={{ delay: index * 0.03 }}
-                                                    className="grid grid-cols-12 p-5 hover:bg-[#111] transition-all duration-300 items-center group relative overflow-hidden gap-4"
+                                                    className="grid grid-cols-6 p-4 hover:bg-[#111] transition-all duration-300 items-center group relative overflow-hidden"
                                                 >
                                                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-(--accent) opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                                                     {/* Item Name */}
-                                                    <div className="col-span-3 pr-4">
+                                                    <div className="col-span-2 pr-4">
                                                         <div className="font-bold text-white group-hover:text-(--accent) transition-colors text-sm wrap-break-word leading-tight">
                                                             {order.cardTitle || 'Unknown Item'}
                                                         </div>
                                                         <div className="text-[10px] text-gray-600 font-mono mt-1 group-hover:text-gray-500">
-                                                            ID: {(order._id || order.id || 'N/A').slice(0, 8)}
+                                                            ID: {(order._id || order.id || 'N/A').slice(0, 8)}...
                                                         </div>
                                                     </div>
 
                                                     {/* Price Badge */}
-                                                    <div className="col-span-1 text-center">
+                                                    <div className="text-center">
                                                         <span className="inline-block px-3 py-1 bg-[#1a1a1a] border border-gray-800 rounded text-green-500 font-mono text-xs font-bold group-hover:border-green-900 group-hover:bg-green-900/10 transition-colors">
                                                             ${(order.price || 0).toLocaleString()}
                                                         </span>
                                                     </div>
 
-                                                    {/* Purchaser Name */}
-                                                    <div className="col-span-3 text-center">
-                                                        <div className="font-bold text-white text-xs truncate uppercase px-2">
-                                                            {order.purchaserName || (order.userId || 'UNKNOWN').slice(0, 8)}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Purchaser Gmail */}
-                                                    <div className="col-span-2 text-center">
-                                                        <div className="text-[10px] text-gray-500 font-mono lowercase truncate px-2">
-                                                            {order.purchaserEmail || 'N/A'}
+                                                    {/* Buyer ID */}
+                                                    <div className="text-center">
+                                                        <div className="inline-flex items-center gap-2 px-2 py-1 bg-[#1a1a1a] rounded border border-transparent group-hover:border-gray-800 transition-colors">
+                                                            <div className="w-4 h-4 rounded-full bg-gray-800 flex items-center justify-center text-[8px] text-gray-400">
+                                                                U
+                                                            </div>
+                                                            <span className="font-mono text-gray-500 text-xs">
+                                                                {(order.userId || 'UNKNOWN').slice(0, 8)}...
+                                                            </span>
                                                         </div>
                                                     </div>
 
                                                     {/* Date */}
-                                                    <div className="col-span-2 text-right">
+                                                    <div className="text-right">
                                                         <div className="text-gray-400 font-mono text-xs group-hover:text-white transition-colors">
                                                             {new Date(order.purchaseDate || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                                         </div>
@@ -1311,23 +1121,23 @@ export default function AdminDashboard() {
                                                     </div>
 
                                                     {/* Actions */}
-                                                    <div className="col-span-1 text-right flex items-center justify-end gap-1">
+                                                    <div className="text-right flex items-center justify-end gap-2">
                                                         <button
                                                             onClick={() => {
                                                                 setEditingOrder(order);
                                                                 setEditOrderForm(order);
                                                             }}
-                                                            className="p-1.5 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                                                            className="p-2 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
                                                             title="Edit Order"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteOrder(order._id || order.id)}
-                                                            className="p-1.5 hover:bg-(--accent)/20 rounded text-gray-500 hover:text-(--accent) transition-colors"
+                                                            className="p-2 hover:bg-(--accent)/20 rounded text-gray-500 hover:text-(--accent) transition-colors"
                                                             title="Delete Order"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                         </button>
                                                     </div>
                                                 </motion.div>

@@ -101,27 +101,6 @@ export interface IOrder extends Document {
     cardId: string;
     cardTitle: string;
     cardNumber: string;
-    cvv?: string;
-    expiry?: string;
-    holder?: string;
-    address?: string;
-    bank?: string;
-    type?: string;
-    zip?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    ssn?: string;
-    dob?: string;
-    email?: string;
-    phone?: string;
-    userAgent?: string;
-    password?: string;
-    ip?: string;
-    videoLink?: string;
-    proxy?: string;
-    purchaserName?: string;
-    purchaserEmail?: string;
     price: number;
     purchaseDate: Date;
 }
@@ -143,27 +122,6 @@ const OrderSchema = new Schema<IOrder>({
         type: String,
         required: false, // Make optional for backward compatibility
     },
-    cvv: String,
-    expiry: String,
-    holder: String,
-    address: String,
-    bank: String,
-    type: String,
-    zip: String,
-    city: String,
-    state: String,
-    country: String,
-    ssn: String,
-    dob: String,
-    email: String,
-    phone: String,
-    userAgent: String,
-    password: String,
-    ip: String,
-    videoLink: String,
-    proxy: String,
-    purchaserName: String,
-    purchaserEmail: String,
     price: {
         type: Number,
         required: true,
@@ -199,8 +157,6 @@ export interface ICard extends Document {
     password?: string;
     ip?: string;
     videoLink?: string;
-    proxy?: string;
-    soldAt?: Date;
     createdAt: Date;
 }
 
@@ -249,92 +205,8 @@ const CardSchema = new Schema<ICard>({
     },
 });
 
-// ActivityLog Schema
-export interface IActivityLog extends Document {
-    userId: string;
-    action: string;
-    details: string;
-    ip?: string;
-    createdAt: Date;
-}
-
-const ActivityLogSchema = new Schema<IActivityLog>({
-    userId: { type: String, required: true },
-    action: { type: String, required: true },
-    details: { type: String, required: true },
-    ip: { type: String, required: false },
-    createdAt: { type: Date, default: Date.now },
-});
-
-// BundleOrder Schema
-export interface IBundleOrder extends Document {
-    userId: string;
-    username: string;
-    bundleTitle: string;
-    cardCount: number;
-    discount: number;
-    originalPrice: number;
-    price: number;
-    purchaseDate: Date;
-}
-
-const BundleOrderSchema = new Schema<IBundleOrder>({
-    userId: { type: String, required: true },
-    username: { type: String, required: true },
-    bundleTitle: { type: String, required: true },
-    cardCount: { type: Number, required: true },
-    discount: { type: Number, required: true },
-    originalPrice: { type: Number, required: true },
-    price: { type: Number, required: true },
-    purchaseDate: { type: Date, default: Date.now },
-});
-
-// Offer Schema
-export interface IOffer extends Document {
-    title: string;
-    description: string;
-    cardCount: number;
-    discount: number;
-    originalPrice: number;
-    price: number;
-    avgPricePerCard: number;
-    badge: string;
-    isActive: boolean;
-    styleIndex: number;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-const OfferSchema = new Schema<IOffer>({
-    title: { type: String, required: true },
-    description: { type: String, default: '' },
-    cardCount: { type: Number, required: true },
-    discount: { type: Number, required: true },
-    originalPrice: { type: Number, required: true },
-    price: { type: Number, required: true },
-    avgPricePerCard: { type: Number, required: true },
-    badge: { type: String, default: '' },
-    isActive: { type: Boolean, default: true },
-    styleIndex: { type: Number, default: 0 },
-}, { timestamps: true });
-
-// Setting Schema
-export interface ISetting extends Document {
-    signupAmount: number;
-    minDepositAmount: number;
-}
-
-const SettingSchema = new Schema<ISetting>({
-    signupAmount: { type: Number, required: true, default: 2000 },
-    minDepositAmount: { type: Number, required: true, default: 7000 },
-});
-
 // Export Models (Safe Check)
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
 export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
-export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
-export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
-export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
-export const Setting = mongoose.models.Setting || mongoose.model<ISetting>('Setting', SettingSchema);

@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,21 +68,9 @@ export default function Orders() {
 
     // Card number: show last 4
     const formatCardNumber = (num: string | undefined) => {
-        if (!num) return 'XXXX XXXX XXXX XXXX';
-        const clean = num.replace(/\s+/g, '');
-        // Mask middle digits: show first 6 and last 4
-        if (clean.length > 10) {
-            const first = clean.slice(0, 6);
-            const last = clean.slice(-4);
-            return first + ' **** **** ' + last;
-        }
-        const matches = clean.match(/.{1,4}/g);
-        return matches ? matches.join(' ') : clean;
-    };
-
-    const maskValue = (val: any) => {
-        if (!val) return 'N/A';
-        return '********';
+        if (!num) return '**** **** **** 0000';
+        const last4 = num.slice(-4);
+        return `**** **** **** ${last4}`;
     };
 
     if (loading) {

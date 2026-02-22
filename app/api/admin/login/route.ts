@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextRequest, NextResponse } from 'next/server';
 
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'sup_warzone';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'War_&_Roar23';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 export async function POST(req: NextRequest) {
     try {
