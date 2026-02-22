@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db';
-import { BundleOrder } from '../../../../lib/models';
+import { BundleOrder as BundleOrderModel } from '../../../../lib/models';
+import type { BundleOrder } from '../../../../types';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
     try {
@@ -13,14 +14,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
         const skip = (page - 1) * limit;
 
         const [bundleOrders, total] = await Promise.all([
-            BundleOrder.find({ userId })
+            BundleOrderModel.find({ userId })
                 .sort({ purchaseDate: -1 })
                 .skip(skip)
                 .limit(limit),
-            BundleOrder.countDocuments({ userId })
+            BundleOrderModel.countDocuments({ userId })
         ]);
 
-        const formatted = bundleOrders.map((bo: any) => ({
+        const formatted = bundleOrders.map((bo: BundleOrder) => ({
             _id: bo._id.toString(),
             id: bo._id.toString(),
             userId: bo.userId,
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
                 current: page,
             }
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Bundle orders fetch error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }

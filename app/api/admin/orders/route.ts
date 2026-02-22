@@ -25,7 +25,7 @@ export async function GET() {
             };
         });
         return NextResponse.json({ orders: decryptedOrders });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
     }
 }

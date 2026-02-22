@@ -7,6 +7,8 @@ import Image from 'next/image';
 import type { User } from '../../types';
 import { DashboardContext } from './DashboardContext';
 import GridBackground from '../theme/GridBackgroundstub';
+import { NotificationToast } from '../components/NotificationToast';
+
 
 export default function DashboardLayout({
     children,
@@ -23,9 +25,11 @@ export default function DashboardLayout({
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [copied, setCopied] = useState(false);
+    const [minDeposit, setMinDeposit] = useState(7000);
 
     // Notification State
-    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info'; id?: number } | null>(null);
+
 
     const router = useRouter();
     const pathname = usePathname();
@@ -48,6 +52,19 @@ export default function DashboardLayout({
     }, []);
 
     useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                if (data.settings && data.settings.minDepositAmount) {
+                    setMinDeposit(data.settings.minDepositAmount);
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings", err);
+            }
+        };
+        fetchSettings();
+
         const userData = localStorage.getItem('user');
         if (!userData) {
             router.push('/login');
@@ -84,8 +101,8 @@ export default function DashboardLayout({
 
         // Validate minimum deposit amount
         const depositAmount = parseFloat(amount);
-        if (depositAmount < 7000) {
-            setError('Minimum deposit amount is $7000 USDT');
+        if (depositAmount < minDeposit) {
+            setError(`Minimum deposit amount is $${minDeposit} USDT`);
             return;
         }
 
@@ -115,7 +132,7 @@ export default function DashboardLayout({
             } else {
                 setError(data.error || 'Deposit failed');
             }
-        } catch (err) {
+        } catch {
             setError('Connection error');
         } finally {
             setLoading(false);
@@ -128,9 +145,10 @@ export default function DashboardLayout({
     const openDepositModal = () => setShowDeposit(true);
     const closeDepositModal = () => setShowDeposit(false);
     const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification(null), 3000);
+        setNotification({ message, type, id: Date.now() });
+        setTimeout(() => setNotification(null), 3500);
     };
+
 
     if (!user) {
         return (
@@ -188,62 +206,12 @@ export default function DashboardLayout({
 
                 {/* Content wrapper with relative positioning */}
                 <div className="relative z-10">
-                    {/* Notification Toast - High Visibility Center Pop */}
-                    <AnimatePresence>
-                        {notification && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -50, x: '-50%' }}
-                                animate={{ opacity: 1, y: 0, x: '-50%' }}
-                                exit={{ opacity: 0, y: -50, x: '-50%' }}
-                                className={`fixed top-6 left-1/2 z-9999 min-w-[320px] md:min-w-[400px] p-0 rounded-lg shadow-2xl backdrop-blur-xl border flex flex-col overflow-hidden ${notification.type === 'success' ? 'bg-black/90 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]' :
-                                    notification.type === 'error' ? 'bg-black/90 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]' :
-                                        'bg-black/90 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4 p-5 relative">
-                                    {/* Icon Box */}
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold border ${notification.type === 'success' ? 'bg-green-500/10 border-green-500 text-green-500' :
-                                        notification.type === 'error' ? 'bg-red-500/10 border-red-500 text-red-500' :
-                                            'bg-blue-500/10 border-blue-500 text-blue-500'
-                                        }`}>
-                                        {notification.type === 'success' ? '✓' : notification.type === 'error' ? '!' : 'i'}
-                                    </div>
-
-                                    {/* Message */}
-                                    <div className="flex-1">
-                                        <h4 className={`text-xs font-black tracking-widest mb-1 ${notification.type === 'success' ? 'text-green-500' :
-                                            notification.type === 'error' ? 'text-red-500' :
-                                                'text-blue-500'
-                                            }`}>
-                                            {notification.type === 'success' ? 'TRANSACTION SUCCESS' : notification.type === 'error' ? 'TRANSACTION ERROR' : 'NOTIFICATION'}
-                                        </h4>
-                                        <p className="text-sm font-bold text-white tracking-wide leading-tight">
-                                            {notification.message}
-                                        </p>
-                                    </div>
-
-                                    {/* Close Button */}
-                                    <button
-                                        onClick={() => setNotification(null)}
-                                        className="text-gray-500 hover:text-white transition-colors"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                {/* Progress Bar Animation */}
-                                <motion.div
-                                    initial={{ width: "100%" }}
-                                    animate={{ width: "0%" }}
-                                    transition={{ duration: 3, ease: "linear" }}
-                                    className={`h-1 w-full ${notification.type === 'success' ? 'bg-green-500' :
-                                        notification.type === 'error' ? 'bg-red-500' :
-                                            'bg-blue-500'
-                                        }`}
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {/* ── Premium Notification Toast ── */}
+                    <NotificationToast
+                        notification={notification}
+                        onClose={() => setNotification(null)}
+                        duration={3500}
+                    />
 
                     {/* Header */}
                     <motion.header
@@ -279,11 +247,11 @@ export default function DashboardLayout({
                                             <p className="text-xs text-(--accent) font-bold tracking-wider mb-0.5">
                                                 WALLET: <span className="text-white text-glow ml-1">${(user.balance || 0).toFixed(2)}</span>
                                             </p>
-                                            {(user as any).accountExpiresAt && (
+                                            {user.accountExpiresAt && (
                                                 <p className="text-[10px] text-gray-500 font-mono">
-                                                    EXPIRES: {new Date((user as any).accountExpiresAt).toLocaleDateString()}
+                                                    EXPIRES: {new Date(user.accountExpiresAt).toLocaleDateString()}
                                                     <span className="text-(--accent) ml-1">
-                                                        ({Math.ceil((new Date((user as any).accountExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} DAYS)
+                                                        ({Math.ceil((new Date(user.accountExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} DAYS)
                                                     </span>
                                                 </p>
                                             )}
@@ -300,7 +268,7 @@ export default function DashboardLayout({
                                     <button
                                         onClick={handleLogout}
                                         className="neon-button text-xs! px-6! py-2.5! rounded-none transition-all border-red-600 text-red-500 hover:bg-red-600 hover:text-white shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:shadow-[0_0_20px_rgba(239,68,68,0.5)] font-bold tracking-widest"
-                                        style={{ '--accent': '#dc2626' } as any}
+                                        style={{ '--accent': '#dc2626' } as React.CSSProperties}
                                     >
                                         LOGOUT
                                     </button>
@@ -338,6 +306,16 @@ export default function DashboardLayout({
                                     <span className="block skew-x-15 group-hover:scale-105 transition-transform relative z-10">MY ORDERS</span>
                                     {isActive('/dashboard/orders') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
                                 </button>
+                                <button
+                                    onClick={() => router.push('/dashboard/offers')}
+                                    className={`relative px-12 md:px-16 py-3 mx-4 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 group ${isActive('/dashboard/offers')
+                                        ? 'bg-(--accent) text-black border-(--accent) shadow-[0_0_25px_var(--accent)] scale-110 z-10'
+                                        : 'bg-black/60 text-gray-500 border-gray-800 hover:border-(--accent) hover:text-white! hover:shadow-[0_0_15px_var(--accent)] hover:bg-black'
+                                        }`}
+                                >
+                                    <span className="block skew-x-15 group-hover:scale-105 transition-transform relative z-10">OFFERS</span>
+                                    {isActive('/dashboard/offers') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
+                                </button>
                             </div>
                         </div>
                     </motion.nav>
@@ -351,7 +329,7 @@ export default function DashboardLayout({
                     <footer className="border-t border-(--border) mt-20 bg-black/80 backdrop-blur-sm">
                         <div className="container mx-auto px-4 py-8" style={{ padding: '32px 24px' }}>
                             <p className="text-center text-xs text-gray-500 font-mono tracking-widest">
-                                WARZONE PROTOCOL <span className="text-(--accent)">v2.0</span> // ENCRYPTED CONNECTION
+                                WARZONE PROTOCOL <span className="text-(--accent)">v2.0</span> {/* ENCRYPTED CONNECTION */}
                             </p>
                         </div>
                     </footer>
@@ -424,14 +402,14 @@ export default function DashboardLayout({
                                                     type="number"
                                                     value={amount}
                                                     onChange={(e) => setAmount(e.target.value)}
-                                                    placeholder="Minimum: $7000"
+                                                    placeholder={`Minimum: $${minDeposit}`}
                                                     className="w-full bg-black border border-gray-800 p-3 text-white focus:border-(--accent) focus:shadow-[0_0_15px_rgba(255,0,51,0.1)] focus:outline-none transition-all rounded font-mono font-bold"
                                                     required
-                                                    min="7000"
+                                                    min={minDeposit}
                                                     step="0.01"
                                                 />
                                                 <p className="text-[10px] text-gray-500 mt-2 font-mono tracking-wide">
-                                                    ⚠ MINIMUM DEPOSIT: $7000 USDT
+                                                    ⚠ MINIMUM DEPOSIT: ${minDeposit} USDT
                                                 </p>
                                             </div>
                                             <div>

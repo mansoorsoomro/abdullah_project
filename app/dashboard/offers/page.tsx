@@ -1,23 +1,14 @@
 'use client';
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tag, Layers, Server, ShieldCheck, Database, Zap, Loader2, PackageX, AlertTriangle, CheckCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDashboard } from '../DashboardContext';
+import type { Offer } from '../../../types';
 
-interface Offer {
-    _id?: string;
-    cards: number;       // normalized from cardCount
-    cardCount?: number;
-    discount: number;
-    title: string;
-    description: string;
-    originalPrice: number;
-    price: number;
-    avgPricePerCard: number;
-    badge?: string;
-    styleIndex?: number;
+// Page-specific extension for normalization
+interface NormalizedOffer extends Offer {
+    cards: number;
 }
 
 const TIER_STYLES = [
@@ -30,14 +21,14 @@ const TIER_STYLES = [
 ];
 
 export default function OffersPage() {
-    const [offers, setOffers] = useState<Offer[]>([]);
+    const [offers, setOffers] = useState<NormalizedOffer[]>([]);
     const [availableCards, setAvailableCards] = useState(0);
     const [avgCardPrice, setAvgCardPrice] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     // Confirm popup state
-    const [confirmOffer, setConfirmOffer] = useState<Offer | null>(null);
+    const [confirmOffer, setConfirmOffer] = useState<NormalizedOffer | null>(null);
     const [purchasing, setPurchasing] = useState(false);
     const [purchaseError, setPurchaseError] = useState('');
 
@@ -50,7 +41,7 @@ export default function OffersPage() {
                 if (data.error) setError(data.error);
                 else {
                     // Normalize: DB offers use cardCount, fallback uses cards
-                    const normalized = (data.offers || []).map((o: any) => ({
+                    const normalized = (data.offers || []).map((o: Offer & { cards?: number }) => ({
                         ...o,
                         cards: o.cards ?? o.cardCount ?? 0,
                         styleIndex: o.styleIndex ?? 0,
@@ -241,13 +232,13 @@ export default function OffersPage() {
                                         {offer.cards} CARDS BUNDLE
                                     </p>
 
-                                    <p className="text-sm text-gray-500 font-mono mb-4 flex-grow relative z-10">
+                                    <p className="text-sm text-gray-500 font-mono mb-4 grow relative z-10">
                                         {offer.description}
                                     </p>
 
                                     {/* Savings badge */}
                                     <div className="relative z-10 mb-4 px-3 py-2 bg-green-900/10 border border-green-800/30 rounded flex items-center gap-2">
-                                        <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                                        <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
                                         <span className="text-xs text-green-400 font-mono font-bold">
                                             YOU SAVE ${savings.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                         </span>
@@ -294,7 +285,7 @@ export default function OffersPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+                        className="fixed inset-0 z-9999 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
                         onClick={() => { if (!purchasing) setConfirmOffer(null); }}
                     >
                         <motion.div
@@ -366,7 +357,7 @@ export default function OffersPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         className="mb-4 p-3 bg-red-900/20 border border-red-500/40 rounded-lg flex items-start gap-2"
                                     >
-                                        <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                        <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                                         <p className="text-red-400 text-xs font-mono">{purchaseError}</p>
                                     </motion.div>
                                 )}

@@ -11,12 +11,12 @@ export async function GET() {
             dbState: states[mongoose.connection.readyState],
             time: new Date().toISOString()
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Health check error:', error);
         return NextResponse.json({
             status: 'error',
-            message: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            message: (error as Error).message,
+            stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
         }, { status: 500 });
     }
 }

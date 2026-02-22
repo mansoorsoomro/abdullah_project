@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
+import Image from 'next/image';
 
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -134,9 +135,11 @@ function LoginForm() {
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                             className="inline-flex items-center justify-center mb-6"
                         >
-                            <img
+                            <Image
                                 src="/IMG_2839.PNG"
                                 alt="Logo"
+                                width={96}
+                                height={96}
                                 className="h-24 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.5)]"
                             />
                         </motion.div>
@@ -166,7 +169,7 @@ function LoginForm() {
 
                                 {/* Email Field */}
                                 <FormField
-                                    control={form.control as any}
+                                    control={form.control}
                                     name="email"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
@@ -190,7 +193,7 @@ function LoginForm() {
 
                                 {/* Password Field */}
                                 <FormField
-                                    control={form.control as any}
+                                    control={form.control}
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">

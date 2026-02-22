@@ -2,10 +2,6 @@
 
 import { createContext, useContext } from 'react';
 
-interface NotificationState {
-    message: string;
-    type: 'success' | 'error' | 'info';
-}
 
 interface DashboardContextType {
     openDepositModal: () => void;

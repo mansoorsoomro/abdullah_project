@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db';
 import { ActivityLog } from '../../../../lib/models';
@@ -22,10 +21,10 @@ export async function GET(req: NextRequest) {
             .limit(50); // Limit to last 50 activities for performance
 
         return NextResponse.json({ activities });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching activity logs:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch activity logs', details: error.message },
+            { error: 'Failed to fetch activity logs', details: (error as Error).message },
             { status: 500 }
         );
     }

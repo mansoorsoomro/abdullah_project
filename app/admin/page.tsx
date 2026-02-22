@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Eye, EyeOff } from 'lucide-react';
 import AdminGridBackground from '../theme/AdminGridBackground';
 
@@ -29,13 +30,13 @@ export default function AdminLogin() {
             const data = await response.json();
 
             if (response.ok) {
-               
+
                 localStorage.setItem('adminAuth', 'true');
                 router.push('/admin/dashboard');
             } else {
                 setError(data.error || 'Invalid credentials');
             }
-        } catch (err) {
+        } catch {
             setError('Connection error. Ensure backend is running.');
         } finally {
             setLoading(false);
@@ -125,9 +126,11 @@ export default function AdminLogin() {
                                 className="inline-block mb-6 relative group"
                             >
                                 <div className="absolute inset-0 bg-red-600/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                <img
+                                <Image
                                     src="/IMG_2839.PNG"
                                     alt="Admin Logo"
+                                    width={112}
+                                    height={112}
                                     className="h-28 w-auto object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,0,0,0.6)]"
                                 />
                             </motion.div>

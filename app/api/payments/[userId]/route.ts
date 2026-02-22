@@ -8,20 +8,43 @@ export async function GET(
 ) {
     try {
         const { userId } = await params;
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '9');
+        const skip = (page - 1) * limit;
+
         await connectDB();
         const user = await User.findById(userId);
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({
+                payments: [],
+                pagination: { total: 0, pages: 0, current: page }
+            });
         }
 
-        const payments = await Payment.find({
+        const query = {
             $or: [
                 { userId: userId },
                 { trxId: user.trxId }
             ]
-        }).sort({ createdAt: -1 });
+        };
 
-        return NextResponse.json({ payments });
+        const [payments, total] = await Promise.all([
+            Payment.find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            Payment.countDocuments(query)
+        ]);
+
+        return NextResponse.json({
+            payments,
+            pagination: {
+                total,
+                pages: Math.ceil(total / limit),
+                current: page
+            }
+        });
     } catch (error) {
         console.error('Get user payments error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });

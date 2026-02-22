@@ -24,7 +24,16 @@ export default function AdminGridBackground() {
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        const drops: any[] = [];
+        interface Drop {
+            x: number;
+            y: number;
+            speed: number;
+            opacity: number;
+            history: { x: number; y: number }[];
+            maxLength: number;
+        }
+
+        const drops: Drop[] = [];
         const maxDrops = Math.floor(width / gridSize) * 4; // Double density compared to User Dashboard
 
         for (let i = 0; i < maxDrops; i++) {

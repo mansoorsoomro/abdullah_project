@@ -120,13 +120,12 @@ export interface IOrder extends Document {
     ip?: string;
     videoLink?: string;
     proxy?: string;
-    purchaserName?: string;
-    purchaserEmail?: string;
     price: number;
     purchaseDate: Date;
     purchaserUsername?: string;
     purchaserEmail?: string;
 }
+
 
 const OrderSchema = new Schema<IOrder>({
     userId: {
@@ -161,8 +160,6 @@ const OrderSchema = new Schema<IOrder>({
     ip: String,
     videoLink: String,
     proxy: String,
-    purchaserName: String,
-    purchaserEmail: String,
     price: {
         type: Number,
         required: true,
@@ -174,6 +171,7 @@ const OrderSchema = new Schema<IOrder>({
     purchaserUsername: String,
     purchaserEmail: String,
 });
+
 
 // Card Schema with encryption for sensitive data
 export interface ICard extends Document {
@@ -201,12 +199,12 @@ export interface ICard extends Document {
     ip?: string;
     videoLink?: string;
     proxy?: string;
-    soldAt?: Date;
     createdAt: Date;
     soldToUsername?: string;
     soldToEmail?: string;
     soldAt?: Date;
 }
+
 
 const CardSchema = new Schema<ICard>({
     title: {
@@ -247,6 +245,7 @@ const CardSchema = new Schema<ICard>({
     password: String,
     ip: String,
     videoLink: String,
+    proxy: String,
     createdAt: {
         type: Date,
         default: Date.now,
@@ -256,30 +255,55 @@ const CardSchema = new Schema<ICard>({
     soldAt: Date,
 });
 
-// Export Models (Safe Check)
-export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
-export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
-export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
-export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
-
 // Activity Log Schema
 export interface IActivityLog extends Document {
     userId: string;
     action: string;
-    details: string;
+    details?: string;
     ip?: string;
     createdAt: Date;
 }
 
 const ActivityLogSchema = new Schema<IActivityLog>({
-    userId: { type: String, required: true },
-    action: { type: String, required: true },
-    details: { type: String, required: true },
-    ip: { type: String },
-    createdAt: { type: Date, default: Date.now },
+    userId: {
+        type: String,
+        required: true,
+        index: true, // Optimizes filtering logs by user
+    },
+    action: {
+        type: String,
+        required: true,
+    },
+    details: {
+        type: String,
+        default: '',
+    },
+    ip: {
+        type: String,
+        default: '',
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+        index: true, // Optimizes sorting by date
+    },
 });
 
-export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
+// Create indexes for efficient querying
+UserSchema.index({ email: 1 });
+UserSchema.index({ username: 1 });
+UserSchema.index({ trxId: 1 });
+
+PaymentSchema.index({ userId: 1, createdAt: -1 }); // Optimize payment history queries
+PaymentSchema.index({ type: 1, status: 1 }); // Optimize filtering by type and status
+PaymentSchema.index({ trxId: 1 });
+
+OrderSchema.index({ userId: 1, purchaseDate: -1 }); // Optimize order history queries
+
+CardSchema.index({ forSale: 1, createdAt: -1 }); // Optimize marketplace listings
+CardSchema.index({ price: 1 }); // Optimize sorting by price
+
+ActivityLogSchema.index({ userId: 1, createdAt: -1 }); // Optimize log history queries
 
 // Bundle Order Schema
 export interface IBundleOrder extends Document {
@@ -294,7 +318,7 @@ export interface IBundleOrder extends Document {
 }
 
 const BundleOrderSchema = new Schema<IBundleOrder>({
-    userId: { type: String, required: true },
+    userId: { type: String, required: true, index: true },
     username: { type: String, required: true },
     bundleTitle: { type: String, required: true },
     cardCount: { type: Number, required: true },
@@ -304,20 +328,20 @@ const BundleOrderSchema = new Schema<IBundleOrder>({
     purchaseDate: { type: Date, default: Date.now },
 });
 
-export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
+BundleOrderSchema.index({ userId: 1, purchaseDate: -1 });
 
-// Offer Schema
+// ─── Offer Schema (admin-managed) ─────────────────────────────────────
 export interface IOffer extends Document {
     title: string;
     description: string;
     cardCount: number;
-    discount: number;
+    discount: number;          // percent e.g. 20
     originalPrice: number;
     price: number;
     avgPricePerCard: number;
-    badge?: string;
+    badge?: string;            // e.g. "BEST VALUE"
     isActive: boolean;
-    styleIndex: number;
+    styleIndex: number;        // 0-5 for colour theme
     createdAt: Date;
     updatedAt: Date;
 }
@@ -335,18 +359,26 @@ const OfferSchema = new Schema<IOffer>({
     styleIndex: { type: Number, default: 0 },
 }, { timestamps: true });
 
+OfferSchema.index({ isActive: 1, createdAt: -1 });
+
+// Export Models (Safe Check)
+export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
+export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
+export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
+export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
+export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
 export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
 
-// Setting Schema
+// Setting Schema (global settings)
 export interface ISetting extends Document {
     signupAmount: number;
     minDepositAmount: number;
-    updatedAt: Date;
 }
 
 const SettingSchema = new Schema<ISetting>({
     signupAmount: { type: Number, default: 2000 },
     minDepositAmount: { type: Number, default: 7000 },
-}, { timestamps: true });
+});
 
 export const Setting = mongoose.models.Setting || mongoose.model<ISetting>('Setting', SettingSchema);

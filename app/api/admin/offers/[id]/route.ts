@@ -33,8 +33,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
         if (!updated) return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
         return NextResponse.json({ success: true, offer: updated });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: (err as Error).message }, { status: 500 });
     }
 }
 
@@ -46,7 +46,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
         const deleted = await Offer.findByIdAndDelete(id);
         if (!deleted) return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: (err as Error).message }, { status: 500 });
     }
 }

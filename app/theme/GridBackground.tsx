@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function GridBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

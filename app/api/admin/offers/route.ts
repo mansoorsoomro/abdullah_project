@@ -1,14 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db';
 import { Offer } from '../../../../lib/models';
+import type { Offer as OfferType } from '../../../../types';
 
 // GET /api/admin/offers — list all offers (active + inactive)
 export async function GET() {
     try {
         await connectDB();
         const offers = await Offer.find({}).sort({ createdAt: -1 });
-        const formatted = offers.map((o: any) => ({
+        const formatted = offers.map((o: OfferType & { _id: { toString: () => string } }) => ({
             _id: o._id.toString(),
             id: o._id.toString(),
             title: o.title,
@@ -25,8 +25,9 @@ export async function GET() {
             updatedAt: o.updatedAt,
         }));
         return NextResponse.json({ offers: formatted });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (error: unknown) {
+        // Cast error to Error to safely access .message
+        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
     }
 }
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true, offer });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Server error' }, { status: 500 });
     }
 }

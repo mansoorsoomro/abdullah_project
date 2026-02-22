@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db';
 import { User, Payment } from '../../../../lib/models';
 
@@ -8,7 +8,7 @@ export async function GET() {
         const payments = await Payment.find().sort({ createdAt: -1 });
 
         const paymentData = await Promise.all(
-            payments.map(async (payment: { trxId: any; _id: any; status: any; createdAt: any; }) => {
+            payments.map(async (payment: { _id: unknown; trxId: string; status: string; createdAt: Date }) => {
                 const user = await User.findOne({ trxId: payment.trxId });
                 return {
                     paymentId: payment._id,

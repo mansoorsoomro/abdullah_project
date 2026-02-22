@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
 import { Offer, Card } from '../../../lib/models';
+import type { Offer as OfferType } from '../../../types';
 
 // GET /api/offers  →  returns active admin-created offers only.
 // No fallback — if admin hasn't created any offers, returns empty array.
@@ -20,7 +20,7 @@ export async function GET() {
         ]);
         const avgPrice: number = priceAgg.length > 0 ? parseFloat(priceAgg[0].avgPrice.toFixed(2)) : 0;
 
-        const formatted = dbOffers.map((o: any) => ({
+        const formatted = dbOffers.map((o: OfferType) => ({
             _id: o._id.toString(),
             id: o._id.toString(),
             title: o.title,

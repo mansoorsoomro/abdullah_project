@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
 import { User, Card, Order } from '../../../lib/models';
-<<<<<<< HEAD
-
-=======
 import { decrypt } from '../../../lib/encryption';
->>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
 export async function POST(req: NextRequest) {
     try {
         await connectDB();
@@ -30,13 +26,6 @@ export async function POST(req: NextRequest) {
         if ((user.balance || 0) < card.price) {
             return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 });
         }
-<<<<<<< HEAD
-
-        // Deduct balance
-        user.balance = (user.balance || 0) - card.price;
-        await user.save();
-
-=======
         // Deduct balance
         user.balance = (user.balance || 0) - card.price;
         await user.save();
@@ -46,14 +35,11 @@ export async function POST(req: NextRequest) {
         card.soldToEmail = user.email;
         card.soldAt = new Date();
         await card.save();
->>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
         const order = await Order.create({
             userId,
             cardId,
             cardTitle: card.title,
             cardNumber: card.cardNumber,
-<<<<<<< HEAD
-=======
             cvv: card.cvv,
             expiry: card.expiry,
             holder: card.holder,
@@ -73,19 +59,11 @@ export async function POST(req: NextRequest) {
             ip: card.ip,
             videoLink: card.videoLink,
             proxy: card.proxy,
->>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
             price: card.price,
             purchaserUsername: user.username,
             purchaserEmail: user.email,
             purchaseDate: new Date(),
         });
-<<<<<<< HEAD
-
-        return NextResponse.json({
-            success: true,
-            message: 'Purchase successful',
-            order,
-=======
         const orderData = order.toObject();
         return NextResponse.json({
             success: true,
@@ -108,7 +86,6 @@ export async function POST(req: NextRequest) {
                 type: decrypt(orderData.type),
                 bank: decrypt(orderData.bank),
             },
->>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
             newBalance: user.balance
         });
     } catch (error) {

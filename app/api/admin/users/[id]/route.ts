@@ -8,8 +8,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const { id } = await params;
         const body = await req.json();
 
-        // Exclude sensitive fields from direct update if necessary, or trust admin
-        const { _id, createdAt, ...updateData } = body;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { _id: _bodyId, createdAt: _createdAt, ...updateData } = body;
 
         const updatedUser = await User.findByIdAndUpdate(
             id,

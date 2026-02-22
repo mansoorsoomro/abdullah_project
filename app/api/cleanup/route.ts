@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
-import { User, Card, Order, Payment, ActivityLog, BundleOrder, Offer } from '../../../lib/models';
+import { User, Card, Order, Payment, ActivityLog, BundleOrder } from '../../../lib/models';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         await connectDB();
 
@@ -59,8 +58,8 @@ export async function GET(req: NextRequest) {
                 cardIds: keepCardIds.length
             }
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Cleanup error:', error);
-        return NextResponse.json({ error: 'Cleanup failed', details: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Cleanup failed', details: (error as Error).message }, { status: 500 });
     }
 }

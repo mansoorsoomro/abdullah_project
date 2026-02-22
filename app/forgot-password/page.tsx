@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import Image from 'next/image';
 
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -40,7 +41,7 @@ function ForgotPasswordForm() {
         },
     });
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(_values: z.infer<typeof formSchema>) {
         setLoading(true);
         setError('');
         setSuccess(false);
@@ -52,7 +53,7 @@ function ForgotPasswordForm() {
 
             // For now, we simulate success to show the UI state
             setSuccess(true);
-        } catch (err) {
+        } catch {
             setError('Connection error. Please try again.');
         } finally {
             setLoading(false);
@@ -112,9 +113,11 @@ function ForgotPasswordForm() {
                             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                             className="inline-flex items-center justify-center mb-6"
                         >
-                            <img
+                            <Image
                                 src="/IMG_2839.PNG"
                                 alt="Logo"
+                                width={96}
+                                height={96}
                                 className="h-24 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,0,0,0.5)]"
                             />
                         </motion.div>

@@ -24,7 +24,15 @@ export default function GridBackground() {
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        const drops: any[] = [];
+        interface Drop {
+            x: number;
+            y: number;
+            speed: number;
+            opacity: number;
+            history: { x: number; y: number }[];
+        }
+
+        const drops: Drop[] = [];
         const maxDrops = Math.floor(width / gridSize) * 2;
 
         for (let i = 0; i < maxDrops; i++) {

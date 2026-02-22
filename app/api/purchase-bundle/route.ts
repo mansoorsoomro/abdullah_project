@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
 import { User, BundleOrder } from '../../../lib/models';
@@ -53,8 +52,8 @@ export async function POST(req: NextRequest) {
             bundleOrder,
             newBalance: user.balance,
         });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Purchase bundle error:', error);
-        return NextResponse.json({ error: 'Server error: ' + error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Server error: ' + (error as Error).message }, { status: 500 });
     }
 }

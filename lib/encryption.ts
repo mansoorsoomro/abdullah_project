@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import type { Card } from '../types';
 
 // Encryption configuration
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'warzone-monster-secret-key-32ch'; // Must be 32 characters
@@ -29,23 +30,30 @@ export function encrypt(text: string): string {
 /**
  * Decrypt sensitive text data
  */
-export function decrypt(text: string): string {
-    if (!text) return '';
+export function decrypt(text: unknown): string {
+    if (!text || typeof text !== 'string') return '';
 
     try {
         const parts = text.split(':');
-        const iv = Buffer.from(parts[0], 'hex');
-        const encryptedText = parts[1];
+        // Check if we have at least 2 parts (IV and encrypted text) and the IV is the correct length for hex (32 chars = 16 bytes)
+        if (parts.length < 2 || parts[0].length !== 32) {
+            return text;
+        }
 
+        const iv = Buffer.from(parts[0], 'hex');
+        if (iv.length !== 16) {
+            return text;
+        }
+
+        const encryptedText = parts[1];
         const decipher = crypto.createDecipheriv('aes-256-cbc', getEncryptionKey(), iv);
 
         let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
         decrypted += decipher.final('utf8');
 
         return decrypted;
-    } catch (error) {
-        console.error('Decryption error:', error);
-        return text; // Return original if decryption fails (for backward compatibility)
+    } catch {
+        return typeof text === 'string' ? text : '';
     }
 }
 
@@ -59,10 +67,10 @@ export function hashPassword(password: string): string {
 /**
  * Encrypt card data before saving to database
  */
-export function encryptCardData(cardData: any) {
+export function encryptCardData(cardData: Partial<Card>) {
     return {
         ...cardData,
-        cardNumber: encrypt(cardData.cardNumber),
+        cardNumber: cardData.cardNumber ? encrypt(cardData.cardNumber) : '',
         cvv: cardData.cvv ? encrypt(cardData.cvv) : undefined,
         holder: cardData.holder ? encrypt(cardData.holder) : undefined,
         address: cardData.address ? encrypt(cardData.address) : undefined,
@@ -72,24 +80,40 @@ export function encryptCardData(cardData: any) {
         phone: cardData.phone ? encrypt(cardData.phone) : undefined,
         password: cardData.password ? encrypt(cardData.password) : undefined,
         ip: cardData.ip ? encrypt(cardData.ip) : undefined,
+        proxy: cardData.proxy ? encrypt(cardData.proxy) : undefined,
+        zip: cardData.zip ? encrypt(cardData.zip) : undefined,
+        city: cardData.city ? encrypt(cardData.city) : undefined,
+        state: cardData.state ? encrypt(cardData.state) : undefined,
+        country: cardData.country ? encrypt(cardData.country) : undefined,
+        bank: cardData.bank ? encrypt(cardData.bank) : undefined,
+        type: cardData.type ? encrypt(cardData.type) : undefined,
     };
 }
+
 
 /**
  * Decrypt card data after fetching from database
  */
-export function decryptCardData(cardData: any) {
+export function decryptCardData(cardData: Record<string, unknown> & { toObject?: () => Record<string, unknown> }): Partial<Card> {
+    const data = cardData.toObject ? cardData.toObject() : cardData;
     return {
-        ...cardData,
-        cardNumber: decrypt(cardData.cardNumber),
-        cvv: cardData.cvv ? decrypt(cardData.cvv) : undefined,
-        holder: cardData.holder ? decrypt(cardData.holder) : undefined,
-        address: cardData.address ? decrypt(cardData.address) : undefined,
-        ssn: cardData.ssn ? decrypt(cardData.ssn) : undefined,
-        dob: cardData.dob ? decrypt(cardData.dob) : undefined,
-        email: cardData.email ? decrypt(cardData.email) : undefined,
-        phone: cardData.phone ? decrypt(cardData.phone) : undefined,
-        password: cardData.password ? decrypt(cardData.password) : undefined,
-        ip: cardData.ip ? decrypt(cardData.ip) : undefined,
+        ...data,
+        cardNumber: data.cardNumber ? decrypt(data.cardNumber) : '',
+        cvv: data.cvv ? decrypt(data.cvv) : undefined,
+        holder: data.holder ? decrypt(data.holder) : undefined,
+        address: data.address ? decrypt(data.address) : undefined,
+        ssn: data.ssn ? decrypt(data.ssn) : undefined,
+        dob: data.dob ? decrypt(data.dob) : undefined,
+        email: data.email ? decrypt(data.email) : undefined,
+        phone: data.phone ? decrypt(data.phone) : undefined,
+        password: data.password ? decrypt(data.password) : undefined,
+        ip: data.ip ? decrypt(data.ip) : undefined,
+        proxy: data.proxy ? decrypt(data.proxy) : undefined,
+        zip: data.zip ? decrypt(data.zip) : undefined,
+        city: data.city ? decrypt(data.city) : undefined,
+        state: data.state ? decrypt(data.state) : undefined,
+        country: data.country ? decrypt(data.country) : undefined,
+        bank: data.bank ? decrypt(data.bank) : undefined,
+        type: data.type ? decrypt(data.type) : undefined,
     };
 }
