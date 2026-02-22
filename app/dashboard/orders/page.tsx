@@ -161,142 +161,68 @@ export default function Orders() {
                                     <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none"></div>
                                     <div className="h-1.5 w-full bg-(--accent) shadow-[0_0_15px_rgba(255,0,51,0.4)]"></div>
 
-                                    <div className="p-6 flex-1 flex flex-col">
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
                                         <div className="flex justify-between items-start mb-6">
-                                            <div>
-                                                <h3 className="text-white font-black italic tracking-wider text-lg leading-tight">{order.cardTitle}</h3>
-                                                <p className="text-[10px] text-gray-500 font-mono mt-1">ID: {order.id.slice(-8).toUpperCase()}</p>
+                                            <div className="flex-1">
+                                                <h3 className="text-white font-black italic tracking-wider text-lg leading-tight truncate pr-4">{order.cardTitle}</h3>
+                                                <p className="text-[10px] text-gray-500 font-mono mt-1">ID_SERIAL: {order.id.slice(-8).toUpperCase()}</p>
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-(--accent) font-black text-xl leading-none">${order.price}</div>
-                                                <div className="text-[10px] text-gray-600 font-bold uppercase mt-1 tracking-widest">USDT PAID</div>
+                                                <div className="text-[10px] text-gray-600 font-bold uppercase mt-1 tracking-widest whitespace-nowrap">USDT PAID</div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4">
-                                            {/* Primary Card Details */}
-                                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group-hover:bg-white/[0.07] transition-colors">
+                                        <div className="space-y-4">
+                                            {/* Simplified Card Details */}
+                                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group-hover:bg-white/[0.07] transition-all duration-300">
                                                 <div className="absolute top-0 right-0 p-2 opacity-10">
                                                     <h3 className="text-2xl font-black italic tracking-tighter leading-none text-white">{order.type || 'VISA'}</h3>
                                                 </div>
-                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-2 tracking-[0.2em]">Full Card Details</p>
-                                                <div className="space-y-3">
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-3 tracking-[0.2em] flex items-center gap-2">
+                                                    <span className="w-1 h-1 bg-(--accent) rounded-full"></span> PROTOCOL_INFO
+                                                </p>
+                                                <div className="space-y-4">
                                                     <div>
-                                                        <p className="text-[8px] text-(--accent) font-bold uppercase mb-0.5">Card Number</p>
-                                                        <p className="text-lg font-mono font-bold text-white tracking-widest drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
-                                                            {formatCardNumber(order.cardNumber)}
+                                                        <p className="text-[8px] text-(--accent) font-bold uppercase mb-1">Card String</p>
+                                                        <p className="text-base font-mono font-bold text-white tracking-[0.1em] drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] break-all">
+                                                            {formatCardNumber(order.cardNumber.slice(0, 4) + ' XXXX XXXX ' + order.cardNumber.slice(-4))}
                                                         </p>
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Expiry</p>
-                                                            <p className="text-sm font-mono font-bold text-white">{order.expiry || 'XX/XX'}</p>
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Expiry</p>
+                                                            <p className="text-xs font-mono font-bold text-white bg-white/5 px-2 py-1 rounded inline-block">XX/XX</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">CVV / CVC</p>
-                                                            <p className="text-sm font-mono font-bold text-(--accent)">{order.cvv || 'XXX'}</p>
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">CVV / CVC</p>
+                                                            <p className="text-xs font-mono font-bold text-(--accent) bg-(--accent)/5 px-2 py-1 rounded inline-block">XXX</p>
                                                         </div>
                                                     </div>
-                                                    {order.holder && (
-                                                        <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Holder Name</p>
-                                                            <p className="text-sm font-mono font-bold text-white uppercase">{order.holder}</p>
-                                                        </div>
-                                                    )}
+                                                    <div>
+                                                        <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Holder Identity</p>
+                                                        <p className="text-xs font-mono font-bold text-white uppercase tracking-wider">ENCRYPTED_USER</p>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Protocol / Sensitive Info */}
-                                            <div className="grid grid-cols-1 gap-2">
-                                                {order.password && (
-                                                    <div className="bg-red-500/5 border border-red-500/10 rounded-lg p-3">
-                                                        <p className="text-[8px] text-red-500 font-bold uppercase mb-1">Account Password</p>
-                                                        <p className="text-xs font-mono font-bold text-white tracking-widest break-all">{order.password}</p>
-                                                    </div>
-                                                )}
-
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {order.ssn && (
-                                                        <div className="bg-white/5 border border-white/10 rounded-lg p-2.5">
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">SSN</p>
-                                                            <p className="text-xs font-mono font-bold text-white">{order.ssn}</p>
-                                                        </div>
-                                                    )}
-                                                    {order.dob && (
-                                                        <div className="bg-white/5 border border-white/10 rounded-lg p-2.5">
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">DOB</p>
-                                                            <p className="text-xs font-mono font-bold text-white">{order.dob}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {(order.proxy || order.ip) && (
-                                                    <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-lg p-3">
-                                                        <p className="text-[8px] text-cyan-500 font-bold uppercase mb-1">Protocol / Connection</p>
-                                                        {order.ip && <p className="text-xs font-mono text-cyan-400 mb-1">IP: {order.ip}</p>}
-                                                        {order.proxy && <p className="text-[10px] font-mono text-gray-300 break-all">PROXY: {order.proxy}</p>}
-                                                    </div>
-                                                )}
-
-                                                {order.videoLink && (
-                                                    <div className="bg-yellow-500/5 border border-yellow-500/10 rounded-lg p-3">
-                                                        <p className="text-[8px] text-yellow-500 font-bold uppercase mb-1">Video Proof</p>
-                                                        <a href={order.videoLink} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono text-blue-400 underline break-all hover:text-blue-300 flex items-center gap-1">
-                                                            <span>OPEN LINK</span>
-                                                            <ExternalLink size={10} />
-                                                        </a>
-                                                    </div>
-                                                )}
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                <p className="text-[8px] text-gray-400 font-bold uppercase mb-1.5 flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 bg-(--accent) rounded-full animate-pulse"></span> SYSTEM_STATUS
+                                                </p>
+                                                <p className="text-[10px] text-gray-500 font-mono leading-relaxed">
+                                                    Protocol data is currently secured. Full technical disclosure was provided exactly once during the initial acquisition phase.
+                                                </p>
                                             </div>
-
-                                            {/* Billing / Identity */}
-                                            {(order.address || order.email || order.phone) && (
-                                                <div className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
-                                                    {order.email && (
-                                                        <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Email</p>
-                                                            <p className="text-xs font-mono text-white break-all">{order.email}</p>
-                                                        </div>
-                                                    )}
-                                                    {order.phone && (
-                                                        <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Phone</p>
-                                                            <p className="text-xs font-mono text-white">{order.phone}</p>
-                                                        </div>
-                                                    )}
-                                                    {(order.address || order.city) && (
-                                                        <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Billing Address</p>
-                                                            <p className="text-[9px] font-mono text-gray-400 leading-relaxed">
-                                                                {order.address && <>{order.address}<br /></>}
-                                                                {order.city} {order.state} {order.zip}<br />
-                                                                <span className="text-gray-300 font-bold uppercase">{order.country}</span>
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
 
-                                        <div className="mt-8 pt-4 border-t border-white/5 flex flex-col gap-3">
-                                            <div className="flex justify-between items-center text-[10px] font-bold">
-                                                <span className="text-gray-600 font-mono italic">DATE: {new Date(order.purchaseDate).toLocaleDateString()}</span>
-                                                <span className="text-green-500 uppercase tracking-widest flex items-center gap-1">
-                                                    <CheckCircle size={10} /> VERIFIED ASSET
+                                        <div className="mt-8 pt-4 border-t border-white/5 flex flex-col gap-4">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] text-gray-600 font-mono italic">{new Date(order.purchaseDate).toLocaleDateString()}</span>
+                                                <span className="text-green-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 rounded">
+                                                    <CheckCircle size={10} /> PROTOCOL_SECURED
                                                 </span>
                                             </div>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const text = `Card: ${order.cardNumber}\nExpiry: ${order.expiry}\nCVV: ${order.cvv}\nHolder: ${order.holder}\nAddress: ${order.address}\nCity: ${order.city}\nState: ${order.state}\nZip: ${order.zip}\nCountry: ${order.country}\nSSN: ${order.ssn}\nDOB: ${order.dob}\nEmail: ${order.email}\nPhone: ${order.phone}\nPassword: ${order.password}\nIP: ${order.ip}\nProxy: ${order.proxy}\nUser Agent: ${order.userAgent}\nVideo: ${order.videoLink}`;
-                                                    navigator.clipboard.writeText(text);
-                                                    alert('ALL protocol data copied to clipboard!');
-                                                }}
-                                                className="w-full py-3 bg-(--accent) text-black font-black text-xs rounded hover:bg-white hover:text-black transition-all uppercase tracking-[0.2em] shadow-[0_0_15px_rgba(255,0,51,0.2)] active:scale-95"
-                                            >
-                                                COPY ALL DATA
-                                            </button>
                                         </div>
                                     </div>
                                 </motion.div>

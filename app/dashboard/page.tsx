@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { CreditCard } from 'lucide-react';
 import type { Card, User } from '../../types';
 import { useDashboard } from './DashboardContext';
 
@@ -44,6 +45,8 @@ export default function Dashboard() {
         }
     };
 
+    const [showReceipt, setShowReceipt] = useState<any | null>(null);
+
     const handlePurchase = async (cardId: string) => {
         if (!user) return;
 
@@ -70,11 +73,12 @@ export default function Dashboard() {
                     refreshUser(); // Update Layout balance
                 }
 
-                showNotification('Purchase successful! Redirecting to orders...', 'success');
+                // Show Receipt Popup instead of redirecting
+                setShowReceipt(data.order);
+                showNotification('Purchase successful!', 'success');
 
-                setTimeout(() => {
-                    router.push('/dashboard/orders');
-                }, 1500);
+                // Refresh cards to remove the purchased one
+                fetchCards(currentPage);
 
             } else {
                 showNotification(`Purchase failed: ${data.error || 'Unknown error'}`, 'error');
@@ -114,6 +118,149 @@ export default function Dashboard() {
 
     return (
         <div>
+            {/* Receipt Popup */}
+            <AnimatePresence>
+                {showReceipt && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-[#0a0a0a] border border-(--accent) w-full max-w-lg rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(255,0,51,0.3)] relative"
+                        >
+                            {/* Receipt Header */}
+                            <div className="bg-(--accent) p-6 text-black text-center relative">
+                                <div className="flex justify-center mb-2">
+                                    <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center p-2 shadow-xl border border-white/20">
+                                        <CreditCard size={32} className="text-(--accent)" />
+                                    </div>
+                                </div>
+                                <h2 className="text-[10px] font-black tracking-[0.5em] mb-1 opacity-70">WARZONE_SECURE_ASSET</h2>
+                                <h3 className="text-2xl font-black italic tracking-widest leading-none">PURCHASE RECEIPT</h3>
+                                <p className="text-[10px] font-bold mt-2 opacity-80 tracking-[0.3em] font-mono">
+                                    SYS_PROTOCOL_VERSION: 1.0.42
+                                </p>
+                                <div className="absolute -bottom-3 left-0 right-0 flex justify-center gap-1">
+                                    {Array.from({ length: 20 }).map((_, i) => (
+                                        <div key={i} className="w-2 h-2 bg-[#0a0a0a] rotate-45"></div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="p-8 pt-10">
+                                {/* Timestamp */}
+                                <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
+                                    <span className="text-gray-500 text-[10px] font-bold tracking-widest uppercase">Issued At</span>
+                                    <span className="text-white font-mono text-xs">{new Date().toLocaleString()}</span>
+                                </div>
+
+                                {/* Asset Details Section */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h4 className="text-(--accent) text-[10px] font-black tracking-widest uppercase mb-1">Asset Category</h4>
+                                            <p className="text-white font-bold italic">{showReceipt.cardTitle}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <h4 className="text-(--accent) text-[10px] font-black tracking-widest uppercase mb-1">Price Paid</h4>
+                                            <p className="text-white font-black text-xl">${showReceipt.price} USDT</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Data Grid */}
+                                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                                            <h3 className="text-4xl font-black italic tracking-tighter leading-none text-white">{showReceipt.type || 'VISA'}</h3>
+                                        </div>
+
+                                        <div className="space-y-4 relative z-10">
+                                            <div>
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Full Protocol Card String</p>
+                                                <p className="text-lg font-mono font-bold text-white tracking-[0.15em] break-all leading-tight">
+                                                    {formatCardNumber(showReceipt.cardNumber)}
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                                <div>
+                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Expiration</p>
+                                                    <p className="text-base font-mono font-bold text-white tracking-widest">{showReceipt.expiry || 'XX/XX'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">CVV/CVC Code</p>
+                                                    <p className="text-base font-mono font-bold text-(--accent) tracking-widest">{showReceipt.cvv || 'XXX'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-2">
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Full Name / Holder</p>
+                                                <p className="text-sm font-bold text-white tracking-wide uppercase">{showReceipt.holder || 'NOT PROVIDED'}</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                                <div>
+                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">SSN</p>
+                                                    <p className="text-sm font-mono font-bold text-white tracking-widest">{showReceipt.ssn || 'NOT PROVIDED'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
+                                                    <p className="text-sm font-mono font-bold text-white tracking-widest">{showReceipt.dob || 'NOT PROVIDED'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-2">
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Billing Details</p>
+                                                <p className="text-xs font-mono text-white leading-relaxed">
+                                                    {showReceipt.address && <>{showReceipt.address}<br /></>}
+                                                    {showReceipt.city}, {showReceipt.state} {showReceipt.zip}<br />
+                                                    <span className="text-(--accent) font-bold uppercase tracking-wider">{showReceipt.country}</span>
+                                                </p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5 mt-2">
+                                                {showReceipt.email && (
+                                                    <div>
+                                                        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Email</p>
+                                                        <p className="text-[10px] font-mono text-white break-all">{showReceipt.email}</p>
+                                                    </div>
+                                                )}
+                                                {showReceipt.phone && (
+                                                    <div>
+                                                        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Phone</p>
+                                                        <p className="text-[10px] font-mono text-white tracking-wider">{showReceipt.phone}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {showReceipt.bank && (
+                                                <div className="pt-2">
+                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Bank Name / Issuer</p>
+                                                    <p className="text-[10px] font-bold text-white tracking-widest uppercase">{showReceipt.bank}</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Scanline Effect */}
+                                        <div className="absolute inset-0 pointer-events-none bg-scanline opacity-10"></div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-10 flex flex-col gap-3">
+                                    <button
+                                        onClick={() => setShowReceipt(null)}
+                                        className="w-full py-4 bg-(--accent) text-black font-black text-sm rounded-lg hover:bg-white transition-all uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(255,0,51,0.4)] active:scale-95"
+                                    >
+                                        CLOSE PROTOCOL
+                                    </button>
+                                    <p className="text-[9px] text-gray-600 text-center font-bold tracking-widest uppercase mt-2 italic">
+                                        Attention: All sensitive data is now your responsibility.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
             {/* Wallet Stats Section */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}

@@ -38,16 +38,16 @@ export async function GET(request: NextRequest) {
                 description: card.description,
                 forSale: card.forSale,
                 cardNumber: maskCardNumber(decrypted.cardNumber),
-                expiry: card.expiry,
-                bank: card.bank,
-                type: card.type,
-                zip: card.zip,
-                city: card.city,
-                state: card.state,
-                country: card.country,
-                userAgent: card.userAgent,
-                videoLink: card.videoLink,
-                proxy: card.proxy
+                expiry: decrypted.expiry,
+                bank: decrypted.bank,
+                type: decrypted.type,
+                zip: decrypted.zip,
+                city: decrypted.city,
+                state: decrypted.state,
+                country: decrypted.country,
+                userAgent: decrypted.userAgent,
+                videoLink: decrypted.videoLink,
+                proxy: decrypted.proxy
             };
         });
 
