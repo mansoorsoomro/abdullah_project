@@ -1346,11 +1346,11 @@ export default function AdminDashboard() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {cards
-                                    .sort((a: any, b: any) => {
+                                    .sort((a: Card, b: Card) => {
                                         if (a.forSale && !b.forSale) return -1;
                                         if (!a.forSale && b.forSale) return 1;
                                         if (a.forSale && b.forSale) {
-                                            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                                            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
                                         }
                                         return new Date(b.soldAt || b.updatedAt || 0).getTime() - new Date(a.soldAt || a.updatedAt || 0).getTime();
                                     })
@@ -1379,7 +1379,7 @@ export default function AdminDashboard() {
                                                             <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
                                                                 <div className="bg-white/90 px-6 py-3 rounded-lg shadow-2xl skew-x-[-10deg] border-2 border-white">
                                                                     <p className="text-black font-black text-sm uppercase tracking-tighter skew-x-[10deg]">
-                                                                        Sold on: <span className="text-red-600 font-mono">{new Date(card.soldAt || card.updatedAt).toLocaleString()}</span>
+                                                                        Sold on: <span className="text-red-600 font-mono">{new Date(card.soldAt || card.updatedAt || 0).toLocaleString()}</span>
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -1640,7 +1640,7 @@ export default function AdminDashboard() {
                                     <div className="divide-y divide-white/5">
                                         {orders
                                             .slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
-                                            .map((order, index) => (
+                                            .map((order: Order, index: number) => (
                                                 <motion.div
                                                     key={order.id}
                                                     initial={{ opacity: 0, x: -10 }}

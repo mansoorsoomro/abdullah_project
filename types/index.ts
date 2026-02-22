@@ -32,6 +32,9 @@ export interface Card {
     ip?: string;
     videoLink?: string;
     proxy?: string;
+    soldAt?: Date | string;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
 }
 
 
@@ -61,6 +64,8 @@ export interface Order {
     ip?: string;
     videoLink?: string;
     proxy?: string;
+    purchaserName?: string;
+    purchaserEmail?: string;
     price: number;
     purchaseDate: Date | string;
 }

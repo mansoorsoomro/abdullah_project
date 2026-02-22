@@ -130,11 +130,6 @@ export default function Dashboard() {
                         >
                             {/* Receipt Header */}
                             <div className="bg-(--accent) p-6 text-black text-center relative">
-                                <div className="flex justify-center mb-2">
-                                    <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center p-2 shadow-xl border border-white/20">
-                                        <CreditCard size={32} className="text-(--accent)" />
-                                    </div>
-                                </div>
                                 <h2 className="text-[10px] font-black tracking-[0.5em] mb-1 opacity-70">WARZONE_SECURE_ASSET</h2>
                                 <h3 className="text-2xl font-black italic tracking-widest leading-none">PURCHASE RECEIPT</h3>
                                 <p className="text-[10px] font-bold mt-2 opacity-80 tracking-[0.3em] font-mono">
