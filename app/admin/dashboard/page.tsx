@@ -33,6 +33,13 @@ export default function AdminDashboard() {
     const [editingOrder, setEditingOrder] = useState<any | null>(null);
     const [editOrderForm, setEditOrderForm] = useState<any>({});
 
+    // Edit Card State
+    const [editingCard, setEditingCard] = useState<any | null>(null);
+    const [editCardForm, setEditCardForm] = useState<any>({});
+
+    const [cardsPage, setCardsPage] = useState(1);
+    const cardsPerPage = 40;
+
     // Form state for new card
     const [newCard, setNewCard] = useState({
         title: '',
@@ -53,6 +60,7 @@ export default function AdminDashboard() {
         dob: '',
         email: '',
         phone: '',
+        proxy: '',
         userAgent: '',
         password: '',
         ip: '',
@@ -176,7 +184,7 @@ export default function AdminDashboard() {
                 setNewCard({
                     title: '', price: '', description: '', cardNumber: '', cvv: '', expiry: '',
                     holder: '', address: '', bank: '', type: '', zip: '', city: '', state: '',
-                    country: '', ssn: '', dob: '', email: '', phone: '', userAgent: '',
+                    country: '', ssn: '', dob: '', email: '', phone: '', proxy: '', userAgent: '',
                     password: '', ip: '', videoLink: ''
                 });
                 fetchCards();
@@ -250,6 +258,48 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleUpdateCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editCardForm || !editCardForm.id) return;
+
+        try {
+            const response = await fetch(`/api/admin/cards/${editCardForm.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: editCardForm.title,
+                    price: editCardForm.price,
+                    cardNumber: editCardForm.cardNumber,
+                    cvv: editCardForm.cvv,
+                    expiry: editCardForm.expiry,
+                    holder: editCardForm.holder,
+                    address: editCardForm.address,
+                    bank: editCardForm.bank,
+                    type: editCardForm.type,
+                    zip: editCardForm.zip,
+                    city: editCardForm.city,
+                    state: editCardForm.state,
+                    country: editCardForm.country,
+                    ssn: editCardForm.ssn,
+                    dob: editCardForm.dob,
+                    email: editCardForm.email,
+                    phone: editCardForm.phone,
+                    proxy: editCardForm.proxy,
+                }),
+            });
+
+            if (response.ok) {
+                showNotification('✓ Card updated successfully!', 'success');
+                setEditingCard(null);
+                fetchCards();
+            } else {
+                showNotification('Failed to update card', 'error');
+            }
+        } catch (error) {
+            showNotification('Failed to update card', 'error');
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('adminAuth');
         router.push('/admin');
@@ -292,8 +342,6 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-black relative overflow-hidden selection:bg-red-500/30">
-<<<<<<< HEAD
-=======
             {/* Edit Card Modal */}
             <AnimatePresence>
                 {editingCard && (
@@ -386,8 +434,6 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </AnimatePresence>
-
->>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
             {/* Background Animation */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <AdminGridBackground />
@@ -932,13 +978,10 @@ export default function AdminDashboard() {
                                                 <input type="text" placeholder="ZIP" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-<<<<<<< HEAD
-=======
                                                 <input type="text" placeholder="Date of Birth" value={newCard.dob} onChange={(e) => setNewCard({ ...newCard, dob: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Phone Number" value={newCard.phone} onChange={(e) => setNewCard({ ...newCard, phone: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="email" placeholder="Email : Enter your Email" value={newCard.email} onChange={(e) => setNewCard({ ...newCard, email: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Proxy (IP:PORT:USER:PASS)" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
->>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
                                             </div>
                                         </div>
                                         <div className="flex justify-end mt-10">
@@ -954,19 +997,6 @@ export default function AdminDashboard() {
 
                             {/* Cards List */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-<<<<<<< HEAD
-                                {cards.map((card, index) => (
-                                    <motion.div
-                                        key={card.id}
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="group relative perspective-[1000px] h-[240px]"
-                                        style={{ padding: '0' }}
-                                    >
-                                        {/* 3D Card Container */}
-                                        <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
-=======
                                 {cards
                                     .sort((a: Card, b: Card) => {
                                         // Available cards first
@@ -995,33 +1025,22 @@ export default function AdminDashboard() {
                                         >
                                             {/* 3D Card Container */}
                                             <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
->>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
 
-                                            {/* FRONT SIDE (Blue Card) */}
-                                            <div className="absolute inset-0 backface-hidden">
-                                                <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
+                                                {/* FRONT SIDE (Blue Card) */}
+                                                <div className="absolute inset-0 backface-hidden">
+                                                    <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
 
-                                                    {/* Background texture */}
-                                                    <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
-                                                    <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                                        {/* Background texture */}
+                                                        <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
-<<<<<<< HEAD
-                                                    {/* Top Row: Chip and Price */}
-                                                    <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
-                                                        <div className="w-12 h-9 bg-yellow-400 rounded-md shadow-sm border border-yellow-500/50 relative overflow-hidden flex items-center justify-center">
-                                                            <div className="grid grid-cols-2 gap-1 w-full h-full p-[2px] opacity-50">
-                                                                <div className="border border-black/20 rounded-sm"></div>
-                                                                <div className="border border-black/20 rounded-sm"></div>
-                                                                <div className="border border-black/20 rounded-sm"></div>
-                                                                <div className="border border-black/20 rounded-sm"></div>
-=======
                                                         {!card.forSale && (
                                                             <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
                                                                 <div className="bg-white/95 px-6 py-4 rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.4)] skew-x-[-10deg] border-2 border-white">
-                                                                    <p className="text-black font-black text-xs uppercase tracking-tighter skew-x-[10deg] flex flex-col items-center">
+                                                                    <p className="text-black font-black text-xs uppercase tracking-tighter skew-x-10 flex flex-col items-center">
                                                                         <span className="text-[10px] opacity-70">ASSET SECURED</span>
                                                                         <span className="text-base text-red-600 font-black">SOLD ON</span>
-                                                                        <span className="font-mono mt-1 pt-1 border-t border-black/10">{formatDate(card.soldAt || card.updatedAt || 0)}</span>
+                                                                        <span className="font-mono mt-1 pt-1 border-t border-black/10">{formatDate(card.soldAt || card.updatedAt || new Date(0))}</span>
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -1042,87 +1061,90 @@ export default function AdminDashboard() {
                                                                 <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
                                                                     {card.price} USDT
                                                                 </div>
->>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex flex-col items-end gap-1">
-                                                            <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
-                                                                {card.price} USDT
+                                                        {/* Card Number */}
+                                                        <div className="mt-2" style={{ padding: '10px' }}>
+                                                            <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
+                                                                {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Bottom Info */}
+                                                        <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
+                                                            <div>
+                                                                <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
+                                                                <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
+                                                            </div>
+                                                            <div className="flex flex-col items-end">
+                                                                <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
+                                                                    <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
 
-                                                    {/* Card Number */}
-                                                    <div className="mt-2" style={{ padding: '10px' }}>
-                                                        <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
-                                                            {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Bottom Info */}
-                                                    <div className="flex justify-between items-end mt-2 px-1" style={{ padding: '12px' }}>
-                                                        <div>
-                                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
-                                                            <p className="font-mono font-bold text-xs tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
-                                                        </div>
-                                                        <div className="flex flex-col items-end">
-                                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
-                                                                <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Shine overlay */}
-                                                    <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl mix-blend-overlay"></div>
-                                                </div>
-                                            </div>
-
-                                            {/* BACK SIDE (Dark Card) */}
-                                            <div className="absolute inset-0 backface-hidden rotate-y-180">
-                                                <div className="relative w-full h-full bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden border border-gray-800 flex flex-col">
-
-                                                    {/* Magnetic Strip */}
-                                                    <div className="w-full h-10 bg-black mt-5"></div>
-
-                                                    {/* CVC Section */}
-                                                    <div className="px-6 mt-3 flex items-center justify-between">
-                                                        <div className="w-3/4 relative">
-                                                            <div className="bg-white h-8 w-full flex items-center justify-end px-3">
-                                                                <span className="font-mono font-bold text-black tracking-widest">XXX</span>
-                                                            </div>
-                                                            <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Bottom Logo & Action */}
-                                                    <div className="flex-1 flex items-end justify-between px-6 pb-4">
-                                                        <div className="flex flex-col gap-1">
-                                                            <div className="text-[8px] text-gray-500">Authorized Signature</div>
-                                                            <div className="h-0.5 w-32 bg-white/20"></div>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Delete Button Overlay */}
-                                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-[2px] z-10">
-                                                        <button
-                                                            onClick={() => handleDeleteCard(card.id)}
-                                                            className="px-6 py-2 bg-red-600 text-white text-xs font-black rounded hover:bg-red-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] uppercase tracking-widest flex items-center gap-2"
-                                                        >
-                                                            <span>✕ DELETE ASSET</span>
-                                                        </button>
+                                                        {/* Shine overlay */}
+                                                        <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent pointer-events-none rounded-2xl mix-blend-overlay"></div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                                {/* BACK SIDE (Dark Card) */}
+                                                <div className="absolute inset-0 backface-hidden rotate-y-180">
+                                                    <div className="relative w-full h-full bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden border border-gray-800 flex flex-col">
+
+                                                        {/* Magnetic Strip */}
+                                                        <div className="w-full h-10 bg-black mt-5"></div>
+
+                                                        {/* CVC Section */}
+                                                        <div className="px-6 mt-3 flex items-center justify-between">
+                                                            <div className="w-3/4 relative">
+                                                                <div className="bg-white h-8 w-full flex items-center justify-end px-3">
+                                                                    <span className="font-mono font-bold text-black tracking-widest">XXX</span>
+                                                                </div>
+                                                                <span className="absolute -top-3 right-0 text-[8px] text-gray-400 font-bold">CVC</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Bottom Logo & Action */}
+                                                        <div className="flex-1 flex items-end justify-between px-6 pb-4">
+                                                            <div className="flex flex-col gap-1">
+                                                                <div className="text-[8px] text-gray-500">Authorized Signature</div>
+                                                                <div className="h-0.5 w-32 bg-white/20"></div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Buttons Overlay */}
+                                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-[2px] z-10">
+                                                            {card.forSale && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingCard(card);
+                                                                        setEditCardForm(card);
+                                                                    }}
+                                                                    className="px-6 py-2 w-[180px] bg-white text-black text-xs font-black rounded hover:bg-gray-200 hover:scale-105 transition-all shadow-[0_0_20px_rgba(255,255,255,0.5)] uppercase tracking-widest flex justify-center items-center gap-2"
+                                                                >
+                                                                    <span>✎ EDIT ASSET</span>
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => handleDeleteCard(card.id)}
+                                                                className="px-6 py-2 w-[180px] bg-red-600 text-white text-xs font-black rounded hover:bg-red-500 hover:scale-105 transition-all shadow-[0_0_20px_rgba(220,38,38,0.5)] uppercase tracking-widest flex justify-center items-center gap-2"
+                                                            >
+                                                                <span>✕ DELETE ASSET</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </motion.div>
+                                    ))}
                             </div>
 
                             {cards.length === 0 && !showAddCard && (

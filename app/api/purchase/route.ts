@@ -46,11 +46,6 @@ export async function POST(req: NextRequest) {
             cardId,
             cardTitle: card.title,
             cardNumber: card.cardNumber,
-<<<<<<< HEAD
-            price: card.price,
-        });
-
-=======
             cvv: card.cvv,
             expiry: card.expiry,
             holder: card.holder,
@@ -98,9 +93,6 @@ export async function POST(req: NextRequest) {
             bank: decrypt(orderData.bank),
             type: decrypt(orderData.type),
         };
-
-
->>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
         return NextResponse.json({
             success: true,
             message: 'Purchase successful',

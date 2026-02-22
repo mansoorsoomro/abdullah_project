@@ -3,6 +3,12 @@ import { connectDB } from '../../../lib/db';
 import { Card } from '../../../lib/models';
 import { decryptCardData } from '../../../lib/encryption';
 
+const maskCardNumber = (num?: string) => {
+    if (!num) return '';
+    if (num.length <= 10) return '*'.repeat(num.length);
+    return num.substring(0, 6) + '*'.repeat(Math.max(0, num.length - 10)) + num.substring(num.length - 4);
+};
+
 export async function GET() {
     try {
         await connectDB();
@@ -16,39 +22,17 @@ export async function GET() {
                 price: card.price,
                 description: card.description,
                 forSale: card.forSale,
-<<<<<<< HEAD
-                cardNumber: decrypted.cardNumber,
-                cvv: decrypted.cvv,
+                cardNumber: maskCardNumber(decrypted.cardNumber),
                 expiry: card.expiry,
-                holder: decrypted.holder,
-                address: decrypted.address,
                 bank: card.bank,
                 type: card.type,
                 zip: card.zip,
                 city: card.city,
                 state: card.state,
                 country: card.country,
-                ssn: decrypted.ssn,
-                dob: decrypted.dob,
-                email: decrypted.email,
-                phone: decrypted.phone,
                 userAgent: card.userAgent,
-                password: decrypted.password,
-                ip: decrypted.ip,
-                videoLink: card.videoLink
-=======
-                cardNumber: maskCardNumber(decrypted.cardNumber),
-                expiry: decrypted.expiry,
-                bank: decrypted.bank,
-                type: decrypted.type,
-                zip: decrypted.zip,
-                city: decrypted.city,
-                state: decrypted.state,
-                country: decrypted.country,
-                userAgent: decrypted.userAgent,
-                videoLink: decrypted.videoLink,
+                videoLink: card.videoLink,
                 proxy: decrypted.proxy
->>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
             };
         });
 

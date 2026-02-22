@@ -69,7 +69,7 @@ export default function Dashboard() {
                 showNotification('Purchase successful!', 'success');
 
                 // Refresh cards to remove the purchased one
-                fetchCards(currentPage);
+                fetchCards();
 
             } else {
                 showNotification(`Purchase failed: ${data.error || 'Unknown error'}`, 'error');
@@ -109,7 +109,7 @@ export default function Dashboard() {
             {/* Receipt Popup */}
             <AnimatePresence>
                 {showReceipt && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -129,11 +129,11 @@ export default function Dashboard() {
                                     <h2 className="text-[10px] font-black tracking-[0.5em] mb-1 opacity-70">WARZONE_ELITE_ASSETS</h2>
                                     <h3 className="text-3xl font-black italic tracking-widest leading-none drop-shadow-md">OFFICIAL RECEIPT</h3>
                                     <div className="mt-3 flex items-center gap-2">
-                                        <span className="h-[1px] w-8 bg-black/30"></span>
+                                        <span className="h-px w-8 bg-black/30"></span>
                                         <p className="text-[10px] font-bold opacity-60 tracking-[0.2em] font-mono whitespace-nowrap">
                                             SECURE_TRANS_ID: {showReceipt.id.slice(-12).toUpperCase()}
                                         </p>
-                                        <span className="h-[1px] w-8 bg-black/30"></span>
+                                        <span className="h-px w-8 bg-black/30"></span>
                                     </div>
                                 </div>
 
