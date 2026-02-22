@@ -210,3 +210,92 @@ export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSc
 export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
 export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
+
+// Activity Log Schema
+export interface IActivityLog extends Document {
+    userId: string;
+    action: string;
+    details: string;
+    ip?: string;
+    createdAt: Date;
+}
+
+const ActivityLogSchema = new Schema<IActivityLog>({
+    userId: { type: String, required: true },
+    action: { type: String, required: true },
+    details: { type: String, required: true },
+    ip: { type: String },
+    createdAt: { type: Date, default: Date.now },
+});
+
+export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
+
+// Bundle Order Schema
+export interface IBundleOrder extends Document {
+    userId: string;
+    username: string;
+    bundleTitle: string;
+    cardCount: number;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    purchaseDate: Date;
+}
+
+const BundleOrderSchema = new Schema<IBundleOrder>({
+    userId: { type: String, required: true },
+    username: { type: String, required: true },
+    bundleTitle: { type: String, required: true },
+    cardCount: { type: Number, required: true },
+    discount: { type: Number, required: true },
+    originalPrice: { type: Number, required: true },
+    price: { type: Number, required: true },
+    purchaseDate: { type: Date, default: Date.now },
+});
+
+export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
+
+// Offer Schema
+export interface IOffer extends Document {
+    title: string;
+    description: string;
+    cardCount: number;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    avgPricePerCard: number;
+    badge?: string;
+    isActive: boolean;
+    styleIndex: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const OfferSchema = new Schema<IOffer>({
+    title: { type: String, required: true },
+    description: { type: String, default: '' },
+    cardCount: { type: Number, required: true },
+    discount: { type: Number, required: true },
+    originalPrice: { type: Number, required: true },
+    price: { type: Number, required: true },
+    avgPricePerCard: { type: Number, required: true },
+    badge: { type: String, default: '' },
+    isActive: { type: Boolean, default: true },
+    styleIndex: { type: Number, default: 0 },
+}, { timestamps: true });
+
+export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
+
+// Setting Schema
+export interface ISetting extends Document {
+    signupAmount: number;
+    minDepositAmount: number;
+    updatedAt: Date;
+}
+
+const SettingSchema = new Schema<ISetting>({
+    signupAmount: { type: Number, default: 2000 },
+    minDepositAmount: { type: Number, default: 7000 },
+}, { timestamps: true });
+
+export const Setting = mongoose.models.Setting || mongoose.model<ISetting>('Setting', SettingSchema);
