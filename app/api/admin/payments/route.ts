@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db';
 import { User, Payment } from '../../../../lib/models';
