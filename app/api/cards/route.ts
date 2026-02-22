@@ -16,6 +16,7 @@ export async function GET() {
                 price: card.price,
                 description: card.description,
                 forSale: card.forSale,
+<<<<<<< HEAD
                 cardNumber: decrypted.cardNumber,
                 cvv: decrypted.cvv,
                 expiry: card.expiry,
@@ -35,6 +36,19 @@ export async function GET() {
                 password: decrypted.password,
                 ip: decrypted.ip,
                 videoLink: card.videoLink
+=======
+                cardNumber: maskCardNumber(decrypted.cardNumber),
+                expiry: decrypted.expiry,
+                bank: decrypted.bank,
+                type: decrypted.type,
+                zip: decrypted.zip,
+                city: decrypted.city,
+                state: decrypted.state,
+                country: decrypted.country,
+                userAgent: decrypted.userAgent,
+                videoLink: decrypted.videoLink,
+                proxy: decrypted.proxy
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
             };
         });
 

@@ -31,6 +31,13 @@ export interface Card {
     password?: string;
     ip?: string;
     videoLink?: string;
+<<<<<<< HEAD
+=======
+    proxy?: string;
+    soldAt?: Date | string;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
 }
 
 export interface Order {
@@ -39,7 +46,32 @@ export interface Order {
     userId: string;
     cardId: string;
     cardTitle: string;
+<<<<<<< HEAD
     cardNumber?: string;
+=======
+    cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+    purchaserName?: string;
+    purchaserEmail?: string;
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     price: number;
     purchaseDate: Date | string;
 }

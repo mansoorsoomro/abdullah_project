@@ -101,6 +101,30 @@ export interface IOrder extends Document {
     cardId: string;
     cardTitle: string;
     cardNumber: string;
+<<<<<<< HEAD
+=======
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+    purchaserName?: string;
+    purchaserEmail?: string;
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     price: number;
     purchaseDate: Date;
 }
@@ -118,10 +142,35 @@ const OrderSchema = new Schema<IOrder>({
         type: String,
         required: true,
     },
+<<<<<<< HEAD
     cardNumber: {
         type: String,
         required: false, // Make optional for backward compatibility
     },
+=======
+    cardNumber: String,
+    cvv: String,
+    expiry: String,
+    holder: String,
+    address: String,
+    bank: String,
+    type: String,
+    zip: String,
+    city: String,
+    state: String,
+    country: String,
+    ssn: String,
+    dob: String,
+    email: String,
+    phone: String,
+    userAgent: String,
+    password: String,
+    ip: String,
+    videoLink: String,
+    proxy: String,
+    purchaserName: String,
+    purchaserEmail: String,
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     price: {
         type: Number,
         required: true,
@@ -157,6 +206,11 @@ export interface ICard extends Document {
     password?: string;
     ip?: string;
     videoLink?: string;
+<<<<<<< HEAD
+=======
+    proxy?: string;
+    soldAt?: Date;
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     createdAt: Date;
 }
 

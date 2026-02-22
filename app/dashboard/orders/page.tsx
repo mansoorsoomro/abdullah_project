@@ -68,6 +68,7 @@ export default function Orders() {
 
     // Card number: show last 4
     const formatCardNumber = (num: string | undefined) => {
+<<<<<<< HEAD
         if (!num) return '**** **** **** 0000';
         const last4 = num.slice(-4);
         return `**** **** **** ${last4}`;
@@ -77,6 +78,38 @@ export default function Orders() {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="cyber-spinner"></div>
+=======
+        if (!num) return 'XXXX XXXX XXXX XXXX';
+        const clean = num.replace(/\s+/g, '');
+        // Mask middle digits: show first 6 and last 4
+        if (clean.length > 10) {
+            const first = clean.slice(0, 6);
+            const last = clean.slice(-4);
+            const masked = first + ' **** **** ' + last;
+            return masked;
+        }
+        const matches = clean.match(/.{1,4}/g);
+        return matches ? matches.join(' ') : clean;
+    };
+
+    const maskValue = (val: any) => {
+        if (!val) return 'N/A';
+        return '********';
+    };
+
+
+    const renderPagination = (current: number, total: number, setter: React.Dispatch<React.SetStateAction<number>>) => total <= 1 ? null : (
+        <div className="p-4 flex justify-center gap-2 mt-8">
+            <button onClick={() => setter(Math.max(1, current - 1))} disabled={current === 1}
+                className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white text-xs font-bold">PREV</button>
+            <div className="flex items-center gap-2">
+                {Array.from({ length: total }, (_, i) => i + 1)
+                    .slice(Math.max(0, current - 3), Math.min(total, current + 2))
+                    .map(n => (
+                        <button key={n} onClick={() => setter(n)}
+                            className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold transition-colors ${current === n ? 'bg-(--accent) text-black' : 'bg-[#1a1a1a] text-gray-400 hover:text-white'}`}>{n}</button>
+                    ))}
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
             </div>
         );
     }
@@ -140,6 +173,7 @@ export default function Orders() {
             </div>
 
             <AnimatePresence mode="wait">
+<<<<<<< HEAD
                 {activeTab === 'purchases' ? (
                     <motion.div
                         key="purchases"
@@ -211,6 +245,81 @@ export default function Orders() {
 
                                             {/* Scan line effect */}
                                             <div className="absolute inset-0 pointer-events-none bg-linear-to-b from-transparent via-(--accent)/5 to-transparent h-[200%] w-full animate-scan opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
+=======
+                {/* ── PURCHASES TAB ── */}
+                {activeTab === 'purchases' && (
+                    <motion.div key="purchases" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {orders.length > 0 ? orders.map((order, index) => (
+                                <motion.div key={order.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col group hover:border-(--accent) transition-all duration-300 h-[420px]">
+                                    <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none"></div>
+                                    <div className="h-1.5 w-full bg-(--accent) shadow-[0_0_15px_rgba(255,0,51,0.4)]"></div>
+
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
+                                        <div className="flex justify-between items-start mb-6">
+                                            <div className="flex-1">
+                                                <h3 className="text-white font-black italic tracking-wider text-lg leading-tight truncate pr-4">{order.cardTitle}</h3>
+                                                <p className="text-[10px] text-gray-500 font-mono mt-1">ID_SERIAL: {order.id.slice(-8).toUpperCase()}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-(--accent) font-black text-xl leading-none">${order.price}</div>
+                                                <div className="text-[10px] text-gray-600 font-bold uppercase mt-1 tracking-widest whitespace-nowrap">USDT PAID</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            {/* Simplified Card Details */}
+                                            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative overflow-hidden group-hover:bg-white/[0.07] transition-all duration-300">
+                                                <div className="absolute top-0 right-0 p-2 opacity-10">
+                                                    <h3 className="text-2xl font-black italic tracking-tighter leading-none text-white">{order.type || 'VISA'}</h3>
+                                                </div>
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-3 tracking-[0.2em] flex items-center gap-2">
+                                                    <span className="w-1 h-1 bg-(--accent) rounded-full"></span> PROTOCOL_INFO
+                                                </p>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <p className="text-[8px] text-(--accent) font-bold uppercase mb-1">Card String</p>
+                                                        <p className="text-base font-mono font-bold text-white tracking-[0.1em] drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] break-all">
+                                                            {formatCardNumber(order.cardNumber.slice(0, 4) + ' XXXX XXXX ' + order.cardNumber.slice(-4))}
+                                                        </p>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Expiry</p>
+                                                            <p className="text-xs font-mono font-bold text-white bg-white/5 px-2 py-1 rounded inline-block">XX/XX</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">CVV / CVC</p>
+                                                            <p className="text-xs font-mono font-bold text-(--accent) bg-(--accent)/5 px-2 py-1 rounded inline-block">XXX</p>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Holder Identity</p>
+                                                        <p className="text-xs font-mono font-bold text-white uppercase tracking-wider">{maskValue(order.holder)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                                                <p className="text-[8px] text-gray-400 font-bold uppercase mb-1.5 flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 bg-(--accent) rounded-full animate-pulse"></span> ASSET_STATUS
+                                                </p>
+                                                <p className="text-[10px] text-gray-500 font-mono leading-relaxed">
+                                                    Complete asset details were disclosed immediately after acquisition. For security, certain fields are now locally masked.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 pt-4 border-t border-white/5 flex flex-col gap-4">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[10px] text-gray-600 font-mono italic">{new Date(order.purchaseDate).toLocaleDateString()}</span>
+                                                <span className="text-green-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 rounded">
+                                                    <CheckCircle size={10} /> PROTOCOL_SECURED
+                                                </span>
+                                            </div>
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
                                         </div>
                                     </div>
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
 import { User, Card, Order } from '../../../lib/models';
+import { decrypt } from '../../../lib/encryption';
 
 export async function POST(req: NextRequest) {
     try {
@@ -33,22 +34,77 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 });
         }
 
-        // Deduct balance
+        // Deduct balance and mark card as sold
         user.balance = (user.balance || 0) - card.price;
-        await user.save();
+        card.forSale = false;
+        card.soldAt = new Date();
+
+        await Promise.all([user.save(), card.save()]);
 
         const order = await Order.create({
             userId,
             cardId,
             cardTitle: card.title,
             cardNumber: card.cardNumber,
+<<<<<<< HEAD
             price: card.price,
         });
 
+=======
+            cvv: card.cvv,
+            expiry: card.expiry,
+            holder: card.holder,
+            address: card.address,
+            bank: card.bank,
+            type: card.type,
+            zip: card.zip,
+            city: card.city,
+            state: card.state,
+            country: card.country,
+            ssn: card.ssn,
+            dob: card.dob,
+            email: card.email,
+            phone: card.phone,
+            userAgent: card.userAgent,
+            password: card.password,
+            ip: card.ip,
+            videoLink: card.videoLink,
+            proxy: card.proxy,
+            purchaserName: user.username,
+            purchaserEmail: user.email,
+            price: card.price,
+        });
+
+        // Decrypt the order data for the immediate receipt popup
+        const orderData = order.toObject();
+        const decryptedOrder = {
+            ...orderData,
+            id: order._id.toString(),
+            cardNumber: decrypt(orderData.cardNumber),
+            cvv: decrypt(orderData.cvv),
+            holder: decrypt(orderData.holder),
+            address: decrypt(orderData.address),
+            ssn: decrypt(orderData.ssn),
+            dob: decrypt(orderData.dob),
+            email: decrypt(orderData.email),
+            phone: decrypt(orderData.phone),
+            password: decrypt(orderData.password),
+            ip: decrypt(orderData.ip),
+            proxy: decrypt(orderData.proxy),
+            zip: decrypt(orderData.zip),
+            city: decrypt(orderData.city),
+            state: decrypt(orderData.state),
+            country: decrypt(orderData.country),
+            bank: decrypt(orderData.bank),
+            type: decrypt(orderData.type),
+        };
+
+
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
         return NextResponse.json({
             success: true,
             message: 'Purchase successful',
-            order,
+            order: decryptedOrder,
             newBalance: user.balance
         });
     } catch (error) {

@@ -29,12 +29,25 @@ export function encrypt(text: string): string {
 /**
  * Decrypt sensitive text data
  */
-export function decrypt(text: string): string {
-    if (!text) return '';
+export function decrypt(text: any): string {
+    if (!text || typeof text !== 'string') return '';
 
     try {
         const parts = text.split(':');
+<<<<<<< HEAD
         const iv = Buffer.from(parts[0], 'hex');
+=======
+        // Check if we have at least 2 parts (IV and encrypted text) and the IV is the correct length for hex (32 chars = 16 bytes)
+        if (parts.length < 2 || parts[0].length !== 32) {
+            return text;
+        }
+
+        const iv = Buffer.from(parts[0], 'hex');
+        if (iv.length !== 16) {
+            return text;
+        }
+
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
         const encryptedText = parts[1];
 
         const decipher = crypto.createDecipheriv('aes-256-cbc', getEncryptionKey(), iv);
@@ -44,8 +57,12 @@ export function decrypt(text: string): string {
 
         return decrypted;
     } catch (error) {
+<<<<<<< HEAD
         console.error('Decryption error:', error);
         return text; // Return original if decryption fails (for backward compatibility)
+=======
+        return typeof text === 'string' ? text : '';
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     }
 }
 
@@ -72,6 +89,16 @@ export function encryptCardData(cardData: any) {
         phone: cardData.phone ? encrypt(cardData.phone) : undefined,
         password: cardData.password ? encrypt(cardData.password) : undefined,
         ip: cardData.ip ? encrypt(cardData.ip) : undefined,
+<<<<<<< HEAD
+=======
+        proxy: cardData.proxy ? encrypt(cardData.proxy) : undefined,
+        zip: cardData.zip ? encrypt(cardData.zip) : undefined,
+        city: cardData.city ? encrypt(cardData.city) : undefined,
+        state: cardData.state ? encrypt(cardData.state) : undefined,
+        country: cardData.country ? encrypt(cardData.country) : undefined,
+        bank: cardData.bank ? encrypt(cardData.bank) : undefined,
+        type: cardData.type ? encrypt(cardData.type) : undefined,
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     };
 }
 
@@ -91,5 +118,15 @@ export function decryptCardData(cardData: any) {
         phone: cardData.phone ? decrypt(cardData.phone) : undefined,
         password: cardData.password ? decrypt(cardData.password) : undefined,
         ip: cardData.ip ? decrypt(cardData.ip) : undefined,
+<<<<<<< HEAD
+=======
+        proxy: cardData.proxy ? decrypt(cardData.proxy) : undefined,
+        zip: cardData.zip ? decrypt(cardData.zip) : undefined,
+        city: cardData.city ? decrypt(cardData.city) : undefined,
+        state: cardData.state ? decrypt(cardData.state) : undefined,
+        country: cardData.country ? decrypt(cardData.country) : undefined,
+        bank: cardData.bank ? decrypt(cardData.bank) : undefined,
+        type: cardData.type ? decrypt(cardData.type) : undefined,
+>>>>>>> 57d05a2ef56d34337c749909233aea889a4f3ced
     };
 }
