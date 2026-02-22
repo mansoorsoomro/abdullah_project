@@ -646,44 +646,8 @@ export default function AdminDashboard() {
                                     <input type="text" value={editCardForm.bank || ''} onChange={(e) => setEditCardForm({ ...editCardForm, bank: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Email</label>
-                                    <input type="email" value={editCardForm.email || ''} onChange={(e) => setEditCardForm({ ...editCardForm, email: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
                                     <label className="text-[10px] uppercase text-gray-500 font-bold">Proxy / SOCKS</label>
                                     <input type="text" value={editCardForm.proxy || ''} onChange={(e) => setEditCardForm({ ...editCardForm, proxy: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">DOB</label>
-                                    <input type="text" value={editCardForm.dob || ''} onChange={(e) => setEditCardForm({ ...editCardForm, dob: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Phone</label>
-                                    <input type="text" value={editCardForm.phone || ''} onChange={(e) => setEditCardForm({ ...editCardForm, phone: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Address</label>
-                                    <input type="text" value={editCardForm.address || ''} onChange={(e) => setEditCardForm({ ...editCardForm, address: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">City</label>
-                                    <input type="text" value={editCardForm.city || ''} onChange={(e) => setEditCardForm({ ...editCardForm, city: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">State</label>
-                                    <input type="text" value={editCardForm.state || ''} onChange={(e) => setEditCardForm({ ...editCardForm, state: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">ZIP</label>
-                                    <input type="text" value={editCardForm.zip || ''} onChange={(e) => setEditCardForm({ ...editCardForm, zip: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Type</label>
-                                    <input type="text" value={editCardForm.type || ''} onChange={(e) => setEditCardForm({ ...editCardForm, type: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] uppercase text-gray-500 font-bold">SSN</label>
-                                    <input type="text" value={editCardForm.ssn || ''} onChange={(e) => setEditCardForm({ ...editCardForm, ssn: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
                                 </div>
 
 
@@ -1317,23 +1281,58 @@ export default function AdminDashboard() {
 
                                             {/* Detailed fields */}
                                             <div className="col-span-1 md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-8 border-t border-white/5">
-                                                <input type="text" placeholder="Bank Name" value={newCard.bank} onChange={(e) => setNewCard({ ...newCard, bank: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Type (Debit/Credit)" value={newCard.type} onChange={(e) => setNewCard({ ...newCard, type: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Address" value={newCard.address} onChange={(e) => setNewCard({ ...newCard, address: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="City" value={newCard.city} onChange={(e) => setNewCard({ ...newCard, city: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="State" value={newCard.state} onChange={(e) => setNewCard({ ...newCard, state: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="ZIP" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Date of Birth" value={newCard.dob} onChange={(e) => setNewCard({ ...newCard, dob: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Phone Number" value={newCard.phone} onChange={(e) => setNewCard({ ...newCard, phone: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="email" placeholder="Email : Enter your Email" value={newCard.email} onChange={(e) => setNewCard({ ...newCard, email: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
-                                                <input type="text" placeholder="Proxy (IP:PORT:USER:PASS)" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Bank Name</label>
+                                                    <input type="text" placeholder="Bank Name" value={newCard.bank} onChange={(e) => setNewCard({ ...newCard, bank: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Type (Visa/Master)</label>
+                                                    <input type="text" placeholder="Visa/Master" value={newCard.type} onChange={(e) => setNewCard({ ...newCard, type: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Personal Email</label>
+                                                    <input type="email" placeholder="Gmail/Email" value={newCard.email} onChange={(e) => setNewCard({ ...newCard, email: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">DOB</label>
+                                                    <input type="text" placeholder="MM/DD/YYYY" value={newCard.dob} onChange={(e) => setNewCard({ ...newCard, dob: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Address (Opt)</label>
+                                                    <input type="text" placeholder="Street Address" value={newCard.address} onChange={(e) => setNewCard({ ...newCard, address: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">City</label>
+                                                    <input type="text" placeholder="City" value={newCard.city} onChange={(e) => setNewCard({ ...newCard, city: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">State</label>
+                                                    <input type="text" placeholder="State" value={newCard.state} onChange={(e) => setNewCard({ ...newCard, state: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Zipcode</label>
+                                                    <input type="text" placeholder="Zipcode" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Country</label>
+                                                    <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Phone (Opt)</label>
+                                                    <input type="text" placeholder="Phone" value={newCard.phone} onChange={(e) => setNewCard({ ...newCard, phone: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">SSN</label>
+                                                    <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Proxy</label>
+                                                    <input type="text" placeholder="Proxy" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
                                             </div>
-
                                         </div>
                                         <div className="flex justify-end mt-10">
-                                            <button type="submit" className="px-12 py-5 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 border-white bg-white text-black hover:bg-(--accent) hover:border-(--accent) hover:text-white shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_var(--accent)] hover:scale-105 active:scale-95 group">
+                                            <button type="submit" className="px-12 py-5 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 border-(--accent) bg-(--accent) text-black hover:bg-black hover:text-(--accent) shadow-[0_0_20px_rgba(255,0,51,0.3)] hover:shadow-[0_0_30px_var(--accent)] hover:scale-105 active:scale-95 group">
                                                 <span className="skew-x-15 flex items-center gap-3">
                                                     PUBLISH TO MARKET <span className="text-xl group-hover:rotate-90 transition-transform">↗</span>
                                                 </span>
@@ -1346,33 +1345,27 @@ export default function AdminDashboard() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {cards
-                                    .sort((a: Card, b: Card) => {
-                                        // Available cards first
-                                        if (a.forSale && !b.forSale) return -1;
-                                        if (!a.forSale && b.forSale) return 1;
-
-                                        // If both are available, newest first
-                                        if (a.forSale && b.forSale) {
-                                            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-                                        }
-
-                                        // If both are sold, sort by sold date (newest sold at bottom? "arranged according to purchased time")
-                                        // The user said: "arranged according to purchased time or date" and "It will show at the end"
-                                        // So for sold cards, we sort them among themselves by soldAt descending, but they are already after forSale cards.
-                                        return new Date(b.soldAt || b.updatedAt || 0).getTime() - new Date(a.soldAt || a.updatedAt || 0).getTime();
-                                    })
                                     .slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)
                                     .map((card, index) => (
                                         <motion.div
                                             key={card.id}
                                             initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: card.forSale ? 1 : 0.6, scale: 1 }}
+                                            animate={{ opacity: 1, scale: 1 }}
                                             transition={{ delay: index * 0.05 }}
-                                            className={`group relative perspective-[1000px] h-[240px] ${!card.forSale ? 'grayscale-[0.5] opacity-60' : ''}`}
+                                            className="group relative perspective-[1000px] h-[240px]"
                                             style={{ padding: '0' }}
                                         >
                                             {/* 3D Card Container */}
-                                            <div className="relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180">
+                                            <div className={`relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180 ${!card.forSale ? 'opacity-40 grayscale-[0.5]' : ''}`}>
+
+                                                {/* Sold Overlay */}
+                                                {!card.forSale && (
+                                                    <div className="absolute inset-x-0 bottom-4 z-50 flex flex-col items-center justify-center pointer-events-none">
+                                                        <span className="bg-white text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl transform skew-x-[-12deg]">
+                                                            Sold on : {card.soldAt ? formatDate(card.soldAt) : 'RECENTLY'}
+                                                        </span>
+                                                    </div>
+                                                )}
 
                                                 {/* FRONT SIDE (Blue Card) */}
                                                 <div className="absolute inset-0 backface-hidden">
@@ -1381,18 +1374,6 @@ export default function AdminDashboard() {
                                                         {/* Background texture */}
                                                         <div className="absolute inset-0 opacity-20 bg-grid pointer-events-none"></div>
                                                         <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-
-                                                        {!card.forSale && (
-                                                            <div className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none">
-                                                                <div className="bg-white/95 px-6 py-4 rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.4)] skew-x-[-10deg] border-2 border-white">
-                                                                    <p className="text-black font-black text-xs uppercase tracking-tighter skew-x-[10deg] flex flex-col items-center">
-                                                                        <span className="text-[10px] opacity-70">ASSET SECURED</span>
-                                                                        <span className="text-base text-red-600 font-black">SOLD ON</span>
-                                                                        <span className="font-mono mt-1 pt-1 border-t border-black/10">{formatDate(card.soldAt || card.updatedAt || 0)}</span>
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                        )}
 
                                                         {/* Top Row: Chip and Price */}
                                                         <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
@@ -1637,62 +1618,60 @@ export default function AdminDashboard() {
                                     <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-(--accent) to-transparent opacity-50"></div>
 
                                     {/* Table Header - Improved Alignment and Visibility */}
-                                    <div className="grid grid-cols-12 p-5 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap gap-4">
-                                        <div className="col-span-3">ITEM SOLD</div>
-                                        <div className="col-span-1 text-center">PRICE</div>
-                                        <div className="col-span-3 text-center">PURCHASER NAME</div>
-                                        <div className="col-span-2 text-center">PURCHASER GMAIL</div>
-                                        <div className="col-span-2 text-right">DATE & TIME</div>
-                                        <div className="col-span-1 text-right">ACTIONS</div>
+                                    <div className="grid grid-cols-7 p-4 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap">
+                                        <div className="col-span-2">ITEM SOLD</div>
+                                        <div className="text-center">PRICE</div>
+                                        <div className="text-center">PURCHASER</div>
+                                        <div className="text-center">GMAIL/EMAIL</div>
+                                        <div className="text-right">DATE & TIME</div>
+                                        <div className="text-right">ACTIONS</div>
                                     </div>
 
                                     {/* Table Body - Better spacing and hover effects */}
                                     <div className="divide-y divide-white/5">
                                         {orders
                                             .slice((currentPage - 1) * ordersPerPage, currentPage * ordersPerPage)
-                                            .map((order: Order, index: number) => (
+                                            .map((order, index) => (
                                                 <motion.div
                                                     key={order.id}
                                                     initial={{ opacity: 0, x: -10 }}
                                                     animate={{ opacity: 1, x: 0 }}
                                                     transition={{ delay: index * 0.03 }}
-                                                    className="grid grid-cols-12 p-5 hover:bg-[#111] transition-all duration-300 items-center group relative overflow-hidden gap-4"
+                                                    className="grid grid-cols-6 p-4 hover:bg-[#111] transition-all duration-300 items-center group relative overflow-hidden"
                                                 >
                                                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-(--accent) opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                                                     {/* Item Name */}
-                                                    <div className="col-span-3 pr-4">
+                                                    <div className="col-span-2 pr-4">
                                                         <div className="font-bold text-white group-hover:text-(--accent) transition-colors text-sm wrap-break-word leading-tight">
                                                             {order.cardTitle || 'Unknown Item'}
                                                         </div>
                                                         <div className="text-[10px] text-gray-600 font-mono mt-1 group-hover:text-gray-500">
-                                                            ID: {(order._id || order.id || 'N/A').slice(0, 8)}
+                                                            ID: {(order._id || order.id || 'N/A').slice(0, 8)}...
                                                         </div>
                                                     </div>
 
                                                     {/* Price Badge */}
-                                                    <div className="col-span-1 text-center">
+                                                    <div className="text-center">
                                                         <span className="inline-block px-3 py-1 bg-[#1a1a1a] border border-gray-800 rounded text-green-500 font-mono text-xs font-bold group-hover:border-green-900 group-hover:bg-green-900/10 transition-colors">
                                                             ${(order.price || 0).toLocaleString()}
                                                         </span>
                                                     </div>
 
-                                                    {/* Purchaser Name */}
-                                                    <div className="col-span-3 text-center">
-                                                        <div className="font-bold text-white text-xs truncate uppercase px-2">
-                                                            {order.purchaserName || (order.userId || 'UNKNOWN').slice(0, 8)}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Purchaser Gmail */}
-                                                    <div className="col-span-2 text-center">
-                                                        <div className="text-[10px] text-gray-500 font-mono lowercase truncate px-2">
-                                                            {order.purchaserEmail || 'N/A'}
+                                                    {/* Buyer ID */}
+                                                    <div className="text-center">
+                                                        <div className="inline-flex items-center gap-2 px-2 py-1 bg-[#1a1a1a] rounded border border-transparent group-hover:border-gray-800 transition-colors">
+                                                            <div className="w-4 h-4 rounded-full bg-gray-800 flex items-center justify-center text-[8px] text-gray-400">
+                                                                U
+                                                            </div>
+                                                            <span className="font-mono text-gray-500 text-xs">
+                                                                {(order.userId || 'UNKNOWN').slice(0, 8)}...
+                                                            </span>
                                                         </div>
                                                     </div>
 
                                                     {/* Date */}
-                                                    <div className="col-span-2 text-right">
+                                                    <div className="text-right">
                                                         <div className="text-gray-400 font-mono text-xs group-hover:text-white transition-colors">
                                                             {new Date(order.purchaseDate || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                                         </div>
@@ -1702,23 +1681,23 @@ export default function AdminDashboard() {
                                                     </div>
 
                                                     {/* Actions */}
-                                                    <div className="col-span-1 text-right flex items-center justify-end gap-1">
+                                                    <div className="text-right flex items-center justify-end gap-2">
                                                         <button
                                                             onClick={() => {
                                                                 setEditingOrder(order);
                                                                 setEditOrderForm(order);
                                                             }}
-                                                            className="p-1.5 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
+                                                            className="p-2 hover:bg-white/10 rounded text-gray-500 hover:text-white transition-colors"
                                                             title="Edit Order"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteOrder(order._id || order.id)}
-                                                            className="p-1.5 hover:bg-(--accent)/20 rounded text-gray-500 hover:text-(--accent) transition-colors"
+                                                            className="p-2 hover:bg-(--accent)/20 rounded text-gray-500 hover:text-(--accent) transition-colors"
                                                             title="Delete Order"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                         </button>
                                                     </div>
                                                 </motion.div>

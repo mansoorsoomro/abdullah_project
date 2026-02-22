@@ -120,10 +120,10 @@ export interface IOrder extends Document {
     ip?: string;
     videoLink?: string;
     proxy?: string;
-    purchaserName?: string;
-    purchaserEmail?: string;
     price: number;
     purchaseDate: Date;
+    purchaserUsername?: string;
+    purchaserEmail?: string;
 }
 
 
@@ -160,8 +160,6 @@ const OrderSchema = new Schema<IOrder>({
     ip: String,
     videoLink: String,
     proxy: String,
-    purchaserName: String,
-    purchaserEmail: String,
     price: {
         type: Number,
         required: true,
@@ -170,6 +168,8 @@ const OrderSchema = new Schema<IOrder>({
         type: Date,
         default: Date.now,
     },
+    purchaserUsername: String,
+    purchaserEmail: String,
 });
 
 
@@ -199,8 +199,10 @@ export interface ICard extends Document {
     ip?: string;
     videoLink?: string;
     proxy?: string;
-    soldAt?: Date;
     createdAt: Date;
+    soldToUsername?: string;
+    soldToEmail?: string;
+    soldAt?: Date;
 }
 
 
@@ -245,10 +247,12 @@ const CardSchema = new Schema<ICard>({
     videoLink: String,
     proxy: String,
     createdAt: {
-
         type: Date,
         default: Date.now,
     },
+    soldToUsername: String,
+    soldToEmail: String,
+    soldAt: Date,
 });
 
 // Activity Log Schema

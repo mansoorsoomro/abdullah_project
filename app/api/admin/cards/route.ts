@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
 export async function GET() {
     try {
         await connectDB();
-        const cards = await Card.find({}).sort({ createdAt: -1 });
+        // Sort by forSale (true first), then createdAt (-1 for new first)
+        const cards = await Card.find({}).sort({ forSale: -1, createdAt: -1 });
 
         const { decryptCardData } = require('../../../../lib/encryption');
 
