@@ -101,8 +101,31 @@ export interface IOrder extends Document {
     cardId: string;
     cardTitle: string;
     cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+    purchaserName?: string;
+    purchaserEmail?: string;
     price: number;
     purchaseDate: Date;
+    purchaserUsername?: string;
+    purchaserEmail?: string;
 }
 
 const OrderSchema = new Schema<IOrder>({
@@ -118,10 +141,28 @@ const OrderSchema = new Schema<IOrder>({
         type: String,
         required: true,
     },
-    cardNumber: {
-        type: String,
-        required: false, // Make optional for backward compatibility
-    },
+    cardNumber: String,
+    cvv: String,
+    expiry: String,
+    holder: String,
+    address: String,
+    bank: String,
+    type: String,
+    zip: String,
+    city: String,
+    state: String,
+    country: String,
+    ssn: String,
+    dob: String,
+    email: String,
+    phone: String,
+    userAgent: String,
+    password: String,
+    ip: String,
+    videoLink: String,
+    proxy: String,
+    purchaserName: String,
+    purchaserEmail: String,
     price: {
         type: Number,
         required: true,
@@ -130,6 +171,8 @@ const OrderSchema = new Schema<IOrder>({
         type: Date,
         default: Date.now,
     },
+    purchaserUsername: String,
+    purchaserEmail: String,
 });
 
 // Card Schema with encryption for sensitive data
@@ -157,7 +200,12 @@ export interface ICard extends Document {
     password?: string;
     ip?: string;
     videoLink?: string;
+    proxy?: string;
+    soldAt?: Date;
     createdAt: Date;
+    soldToUsername?: string;
+    soldToEmail?: string;
+    soldAt?: Date;
 }
 
 const CardSchema = new Schema<ICard>({
@@ -203,6 +251,9 @@ const CardSchema = new Schema<ICard>({
         type: Date,
         default: Date.now,
     },
+    soldToUsername: String,
+    soldToEmail: String,
+    soldAt: Date,
 });
 
 // Export Models (Safe Check)

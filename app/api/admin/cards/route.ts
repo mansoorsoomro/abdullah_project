@@ -28,3 +28,33 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
 }
+<<<<<<< HEAD
+=======
+export async function GET() {
+    try {
+        await connectDB();
+        // Sort by forSale (true first), then createdAt (-1 for new first)
+        const cards = await Card.find({}).sort({ forSale: -1, createdAt: -1 });
+
+        const { decryptCardData } = require('../../../../lib/encryption');
+
+        const decryptedCards = cards.map(card => {
+            const cardObj = card.toObject();
+            const decrypted = decryptCardData(cardObj);
+            return {
+                ...decrypted,
+                id: card._id.toString(),
+                _id: card._id.toString()
+            };
+        });
+
+        return NextResponse.json({
+            success: true,
+            cards: decryptedCards
+        });
+    } catch (error) {
+        console.error('Fetch admin cards error:', error);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
+}
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef

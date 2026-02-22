@@ -39,6 +39,7 @@ export default function Orders() {
             const ordersData = await ordersRes.json();
             const paymentsData = await paymentsRes.json();
 
+<<<<<<< HEAD
             setOrders(ordersData.orders || []);
             setPayments(paymentsData.payments || []);
         } catch (error) {
@@ -65,6 +66,27 @@ export default function Orders() {
         const visible = str.slice(0, visibleCount);
         return `${visible}****`;
     };
+=======
+    const fetchBundleOrders = async (userId: string, page: number) => {
+        try {
+            const res = await fetch(`/api/bundle-orders/${userId}?page=${page}&limit=${itemsPerPage}`);
+            const data = await res.json();
+            setBundleOrders(data.bundleOrders || []);
+            if (data.pagination) setTotalBundlesPages(data.pagination.pages);
+        } catch (e) { console.error(e); }
+    };
+
+    const formatDate = (date: Date | string) =>
+        new Date(date).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+    const formatCardNumber = (num: string | undefined) => {
+        if (!num) return 'XXXX XXXX XXXX XXXX';
+        const clean = num.replace(/\s+/g, '');
+        const matches = clean.match(/.{1,4}/g);
+        return matches ? matches.join(' ') : clean;
+    };
+
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
 
     // Card number: show last 4
     const formatCardNumber = (num: string | undefined) => {
@@ -140,6 +162,7 @@ export default function Orders() {
             </div>
 
             <AnimatePresence mode="wait">
+<<<<<<< HEAD
                 {activeTab === 'purchases' ? (
                     <motion.div
                         key="purchases"
@@ -318,10 +341,82 @@ export default function Orders() {
                                                 <span className="text-[9px] text-gray-500 font-bold block mb-0.5 tracking-wider">DATE</span>
                                                 <span className="text-[10px] text-gray-300 font-mono">
                                                     {new Date(payment.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' })}
+=======
+                {/* ── PURCHASES TAB ── */}
+                {activeTab === 'purchases' && (
+                    <motion.div key="purchases" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr">
+                            {orders.length > 0 ? orders.map((order, index) => (
+                                <motion.div key={order.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col group hover:border-(--accent) transition-all duration-300 h-full">
+                                    <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none"></div>
+                                    <div className="h-1.5 w-full bg-(--accent) shadow-[0_0_15px_rgba(255,0,51,0.4)]"></div>
+
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div>
+                                                    <h3 className="text-white font-black italic tracking-wider text-lg leading-tight uppercase">{order.cardTitle}</h3>
+                                                    <p className="text-[10px] text-gray-500 font-mono mt-1">ASSET_ID: {order.id.slice(-8).toUpperCase()}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-(--accent) font-black text-xl leading-none">${order.price}</div>
+                                                    <div className="text-[10px] text-gray-600 font-bold uppercase mt-1 tracking-widest">USDT</div>
+                                                </div>
+                                            </div>
+
+                                            {/* Primary Card Details (Market Style) */}
+                                            <div className="relative aspect-[1.6/1] w-full bg-linear-to-br from-[#111] to-black border border-white/10 rounded-xl p-5 overflow-hidden group-hover:border-(--accent)/30 transition-colors">
+                                                <div className="absolute top-0 right-0 p-4 opacity-20">
+                                                    <h3 className="text-3xl font-black italic tracking-tighter leading-none text-white">{order.type || 'VISA'}</h3>
+                                                </div>
+
+                                                <div className="h-10 w-12 bg-yellow-500/80 rounded-md mb-6 opacity-80"></div>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase mb-1 tracking-widest">Card Number</p>
+                                                        <p className="text-xl font-mono font-bold text-white tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
+                                                            {formatCardNumber(order.cardNumber)}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex justify-between items-end">
+                                                        <div>
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Holder Name</p>
+                                                            <p className="text-xs font-mono font-bold text-white uppercase tracking-wider">{order.holder || 'XXXX XXXX'}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Expires</p>
+                                                            <p className="text-xs font-mono font-bold text-white">{order.expiry || 'XX/XX'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 pt-4 border-t border-white/5 space-y-4">
+                                            <div className="flex justify-between items-center text-[10px] font-bold">
+                                                <span className="text-gray-600 font-mono uppercase">Date: {new Date(order.purchaseDate).toLocaleDateString()}</span>
+                                                <span className="text-green-500 uppercase tracking-widest flex items-center gap-1">
+                                                    <CheckCircle size={10} /> ASSET_SECURED
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
                                                 </span>
+                                            </div>
+
+                                            <div className="p-3 bg-white/5 border border-white/10 rounded-lg text-center">
+                                                <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">Full Details in Receipt Popup Only</p>
                                             </div>
                                         </div>
                                     </div>
+<<<<<<< HEAD
+=======
+                                </motion.div>
+                            )) : (
+                                <div className="text-center py-20 text-gray-500 col-span-full">
+                                    <p className="font-mono tracking-widest">NO PURCHASE HISTORY FOUND</p>
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
                                 </div>
 
                                 {/* Hover Glow */}

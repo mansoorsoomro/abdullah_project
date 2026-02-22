@@ -292,6 +292,66 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-black relative overflow-hidden selection:bg-red-500/30">
+<<<<<<< HEAD
+=======
+            {/* Edit Card Modal */}
+            <AnimatePresence>
+                {editingCard && (
+                    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-[#0f0f0f] border border-gray-800 p-8 rounded-xl w-full max-w-2xl shadow-2xl relative my-10"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-(--accent)"></div>
+                            <h3 className="text-xl font-black text-white mb-6 tracking-widest flex items-center gap-3">
+                                <span className="text-(--accent)">EDIT</span> ASSET
+                            </h3>
+
+                            <form onSubmit={handleUpdateCard} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="col-span-1 md:col-span-2 space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Title</label>
+                                    <input type="text" value={editCardForm.title || ''} onChange={(e) => setEditCardForm({ ...editCardForm, title: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Price</label>
+                                    <input type="number" value={editCardForm.price || ''} onChange={(e) => setEditCardForm({ ...editCardForm, price: parseFloat(e.target.value) })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Card Number</label>
+                                    <input type="text" value={editCardForm.cardNumber || ''} onChange={(e) => setEditCardForm({ ...editCardForm, cardNumber: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                {/* Additional Fields */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Expiry</label>
+                                    <input type="text" value={editCardForm.expiry || ''} onChange={(e) => setEditCardForm({ ...editCardForm, expiry: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">CVV</label>
+                                    <input type="text" value={editCardForm.cvv || ''} onChange={(e) => setEditCardForm({ ...editCardForm, cvv: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Balance/Limit</label>
+                                    <input type="text" value={editCardForm.bank || ''} onChange={(e) => setEditCardForm({ ...editCardForm, bank: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase text-gray-500 font-bold">Proxy / SOCKS</label>
+                                    <input type="text" value={editCardForm.proxy || ''} onChange={(e) => setEditCardForm({ ...editCardForm, proxy: e.target.value })} className="w-full bg-black/50 border border-gray-800 p-3 text-white text-sm" />
+                                </div>
+
+
+                                <div className="col-span-1 md:col-span-2 flex gap-4 mt-6">
+                                    <button type="button" onClick={() => setEditingCard(null)} className="flex-1 py-3 bg-gray-900 text-gray-400 font-bold text-xs hover:bg-gray-800">CANCEL</button>
+                                    <button type="submit" className="flex-1 py-3 bg-(--accent) text-black font-bold text-xs hover:bg-white">SAVE CHANGES</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
             {/* Background Animation */}
             <div className="fixed inset-0 pointer-events-none z-0">
                 <AdminGridBackground />
@@ -828,6 +888,7 @@ export default function AdminDashboard() {
 
                                             {/* Detailed fields */}
                                             <div className="col-span-1 md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-6 mt-6 pt-8 border-t border-white/5">
+<<<<<<< HEAD
                                                 <input type="text" placeholder="Bank Name" value={newCard.bank} onChange={(e) => setNewCard({ ...newCard, bank: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Type (Debit/Credit)" value={newCard.type} onChange={(e) => setNewCard({ ...newCard, type: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Address" value={newCard.address} onChange={(e) => setNewCard({ ...newCard, address: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
@@ -836,10 +897,60 @@ export default function AdminDashboard() {
                                                 <input type="text" placeholder="ZIP" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
                                                 <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 transition-colors" />
+=======
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Bank Name</label>
+                                                    <input type="text" placeholder="Bank Name" value={newCard.bank} onChange={(e) => setNewCard({ ...newCard, bank: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Type (Visa/Master)</label>
+                                                    <input type="text" placeholder="Visa/Master" value={newCard.type} onChange={(e) => setNewCard({ ...newCard, type: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Personal Email</label>
+                                                    <input type="email" placeholder="Gmail/Email" value={newCard.email} onChange={(e) => setNewCard({ ...newCard, email: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">DOB</label>
+                                                    <input type="text" placeholder="MM/DD/YYYY" value={newCard.dob} onChange={(e) => setNewCard({ ...newCard, dob: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Address (Opt)</label>
+                                                    <input type="text" placeholder="Street Address" value={newCard.address} onChange={(e) => setNewCard({ ...newCard, address: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">City</label>
+                                                    <input type="text" placeholder="City" value={newCard.city} onChange={(e) => setNewCard({ ...newCard, city: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">State</label>
+                                                    <input type="text" placeholder="State" value={newCard.state} onChange={(e) => setNewCard({ ...newCard, state: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Zipcode</label>
+                                                    <input type="text" placeholder="Zipcode" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Country</label>
+                                                    <input type="text" placeholder="Country" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Phone (Opt)</label>
+                                                    <input type="text" placeholder="Phone" value={newCard.phone} onChange={(e) => setNewCard({ ...newCard, phone: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">SSN</label>
+                                                    <input type="text" placeholder="SSN" value={newCard.ssn} onChange={(e) => setNewCard({ ...newCard, ssn: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] text-gray-500 font-bold uppercase">Proxy</label>
+                                                    <input type="text" placeholder="Proxy" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input text-sm bg-black/30 border-white/5 hover:border-white/20 h-10 w-full" />
+                                                </div>
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
                                             </div>
                                         </div>
                                         <div className="flex justify-end mt-10">
-                                            <button type="submit" className="px-12 py-5 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 border-white bg-white text-black hover:bg-(--accent) hover:border-(--accent) hover:text-white shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_var(--accent)] hover:scale-105 active:scale-95 group">
+                                            <button type="submit" className="px-12 py-5 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 border-(--accent) bg-(--accent) text-black hover:bg-black hover:text-(--accent) shadow-[0_0_20px_rgba(255,0,51,0.3)] hover:shadow-[0_0_30px_var(--accent)] hover:scale-105 active:scale-95 group">
                                                 <span className="skew-x-15 flex items-center gap-3">
                                                     PUBLISH TO MARKET <span className="text-xl group-hover:rotate-90 transition-transform">↗</span>
                                                 </span>
@@ -851,6 +962,7 @@ export default function AdminDashboard() {
 
                             {/* Cards List */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<<<<<<< HEAD
                                 {cards.map((card, index) => (
                                     <motion.div
                                         key={card.id}
@@ -879,6 +991,54 @@ export default function AdminDashboard() {
                                                                 <div className="border border-black/20 rounded-sm"></div>
                                                                 <div className="border border-black/20 rounded-sm"></div>
                                                                 <div className="border border-black/20 rounded-sm"></div>
+=======
+                                {cards
+                                    .slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)
+                                    .map((card, index) => (
+                                        <motion.div
+                                            key={card.id}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className="group relative perspective-[1000px] h-[240px]"
+                                            style={{ padding: '0' }}
+                                        >
+                                            {/* 3D Card Container */}
+                                            <div className={`relative w-full h-full transition-all duration-700 transform-style-3d group-hover:rotate-y-180 ${!card.forSale ? 'opacity-40 grayscale-[0.5]' : ''}`}>
+
+                                                {/* Sold Overlay */}
+                                                {!card.forSale && (
+                                                    <div className="absolute inset-x-0 bottom-4 z-50 flex flex-col items-center justify-center pointer-events-none">
+                                                        <span className="bg-white text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl transform skew-x-[-12deg]">
+                                                            Sold on : {card.soldAt ? formatDate(card.soldAt) : 'RECENTLY'}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* FRONT SIDE (Blue Card) */}
+                                                <div className="absolute inset-0 backface-hidden">
+                                                    <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
+
+                                                        {/* Background texture */}
+                                                        <div className="absolute inset-0 opacity-20 bg-grid pointer-events-none"></div>
+                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+
+                                                        {/* Top Row: Chip and Price */}
+                                                        <div className="relative z-10 flex justify-between items-start" style={{ padding: '10px' }}>
+                                                            <div className="w-12 h-9 bg-yellow-400 rounded-md shadow-sm border border-yellow-500/50 relative overflow-hidden flex items-center justify-center">
+                                                                <div className="grid grid-cols-2 gap-1 w-full h-full p-[2px] opacity-50">
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                    <div className="border border-black/20 rounded-sm"></div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex flex-col items-end gap-1">
+                                                                <div className="bg-(--accent)/20 border border-(--accent)/50 px-3 py-1 rounded-full text-xs font-black shadow-[0_0_15px_rgba(255,0,51,0.3)] text-(--accent)">
+                                                                    {card.price} USDT
+                                                                </div>
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
                                                             </div>
                                                         </div>
 
@@ -1059,10 +1219,18 @@ export default function AdminDashboard() {
                                     <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-(--accent) to-transparent opacity-50"></div>
 
                                     {/* Table Header - Improved Alignment and Visibility */}
+<<<<<<< HEAD
                                     <div className="grid grid-cols-5 p-4 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap">
                                         <div className="col-span-2">ITEM SOLD</div>
                                         <div className="text-center">PRICE</div>
                                         <div className="text-center">BUYER ID</div>
+=======
+                                    <div className="grid grid-cols-7 p-4 bg-[#0f0f0f] border-b border-gray-800 text-[10px] text-gray-400 tracking-wider font-black uppercase whitespace-nowrap">
+                                        <div className="col-span-2">ITEM SOLD</div>
+                                        <div className="text-center">PRICE</div>
+                                        <div className="text-center">PURCHASER</div>
+                                        <div className="text-center">GMAIL/EMAIL</div>
+>>>>>>> f082feee3760cd76e32931d83abc25fd295865ef
                                         <div className="text-right">DATE & TIME</div>
                                         <div className="text-right">ACTIONS</div>
                                     </div>
