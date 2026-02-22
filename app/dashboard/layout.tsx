@@ -25,7 +25,7 @@ export default function DashboardLayout({
     const [success, setSuccess] = useState('');
     const [copied, setCopied] = useState(false);
 
-    // Notification State
+    
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     const router = useRouter();
