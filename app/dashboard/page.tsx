@@ -129,15 +129,30 @@ export default function Dashboard() {
                             className="bg-[#0a0a0a] border border-(--accent) w-full max-w-lg rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(255,0,51,0.3)] relative"
                         >
                             {/* Receipt Header */}
-                            <div className="bg-(--accent) p-6 text-black text-center relative">
-                                <h2 className="text-[10px] font-black tracking-[0.5em] mb-1 opacity-70">WARZONE_SECURE_ASSET</h2>
-                                <h3 className="text-2xl font-black italic tracking-widest leading-none">PURCHASE RECEIPT</h3>
-                                <p className="text-[10px] font-bold mt-2 opacity-80 tracking-[0.3em] font-mono">
-                                    SYS_PROTOCOL_VERSION: 1.0.42
-                                </p>
+                            <div className="bg-(--accent) p-8 text-black text-center relative overflow-hidden">
+                                {/* Decorative background elements for header */}
+                                <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
+                                <div className="absolute bottom-0 right-0 w-32 h-32 bg-black/5 rounded-full translate-x-1/3 translate-y-1/3 blur-xl"></div>
+
+                                <div className="relative z-10 flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mb-4 shadow-2xl border border-white/20">
+                                        <CreditCard className="w-10 h-10 text-(--accent)" />
+                                    </div>
+                                    <h2 className="text-[10px] font-black tracking-[0.5em] mb-1 opacity-70">WARZONE_ELITE_ASSETS</h2>
+                                    <h3 className="text-3xl font-black italic tracking-widest leading-none drop-shadow-md">OFFICIAL RECEIPT</h3>
+                                    <div className="mt-3 flex items-center gap-2">
+                                        <span className="h-[1px] w-8 bg-black/30"></span>
+                                        <p className="text-[10px] font-bold opacity-60 tracking-[0.2em] font-mono whitespace-nowrap">
+                                            SECURE_TRANS_ID: {showReceipt.id.slice(-12).toUpperCase()}
+                                        </p>
+                                        <span className="h-[1px] w-8 bg-black/30"></span>
+                                    </div>
+                                </div>
+
+                                {/* Zigzag bottom edge */}
                                 <div className="absolute -bottom-3 left-0 right-0 flex justify-center gap-1">
-                                    {Array.from({ length: 20 }).map((_, i) => (
-                                        <div key={i} className="w-2 h-2 bg-[#0a0a0a] rotate-45"></div>
+                                    {Array.from({ length: 25 }).map((_, i) => (
+                                        <div key={i} className="w-2.5 h-2.5 bg-[#0a0a0a] rotate-45"></div>
                                     ))}
                                 </div>
                             </div>
@@ -163,74 +178,80 @@ export default function Dashboard() {
                                     </div>
 
                                     {/* Data Grid */}
-                                    <div className="bg-white/5 border border-white/10 rounded-xl p-6 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                                            <h3 className="text-4xl font-black italic tracking-tighter leading-none text-white">{showReceipt.type || 'VISA'}</h3>
+                                    <div className="bg-[#111] border border-white/10 rounded-2xl p-6 relative overflow-hidden shadow-inner">
+                                        <div className="absolute top-0 right-0 p-6 opacity-10">
+                                            <h3 className="text-5xl font-black italic tracking-tighter leading-none text-white">{showReceipt.type || 'VISA'}</h3>
                                         </div>
 
-                                        <div className="space-y-4 relative z-10">
+                                        <div className="space-y-6 relative z-10">
                                             <div>
-                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Full Protocol Card String</p>
-                                                <p className="text-lg font-mono font-bold text-white tracking-[0.15em] break-all leading-tight">
+                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-2 tracking-widest flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 bg-(--accent) rounded-full"></span>
+                                                    DECRYPTED_ASSET_DATA
+                                                </p>
+                                                <p className="text-xl font-mono font-bold text-white tracking-[0.2em] break-all leading-tight bg-black/40 p-4 rounded-xl border border-white/5 shadow-2xl">
                                                     {formatCardNumber(showReceipt.cardNumber)}
                                                 </p>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 pt-2">
-                                                <div>
-                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Expiration</p>
-                                                    <p className="text-base font-mono font-bold text-white tracking-widest">{showReceipt.expiry || 'XX/XX'}</p>
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                    <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Expiration</p>
+                                                    <p className="text-lg font-mono font-bold text-white tracking-widest">{showReceipt.expiry || 'XX/XX'}</p>
                                                 </div>
-                                                <div>
-                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">CVV/CVC Code</p>
-                                                    <p className="text-base font-mono font-bold text-(--accent) tracking-widest">{showReceipt.cvv || 'XXX'}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="pt-2">
-                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Full Name / Holder</p>
-                                                <p className="text-sm font-bold text-white tracking-wide uppercase">{showReceipt.holder || 'NOT PROVIDED'}</p>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 pt-2">
-                                                <div>
-                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">SSN</p>
-                                                    <p className="text-sm font-mono font-bold text-white tracking-widest">{showReceipt.ssn || 'NOT PROVIDED'}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
-                                                    <p className="text-sm font-mono font-bold text-white tracking-widest">{showReceipt.dob || 'NOT PROVIDED'}</p>
+                                                <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                    <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">CVC/CVV</p>
+                                                    <p className="text-lg font-mono font-bold text-(--accent) tracking-widest">{showReceipt.cvv || 'XXX'}</p>
                                                 </div>
                                             </div>
 
-                                            <div className="pt-2">
-                                                <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Billing Details</p>
-                                                <p className="text-xs font-mono text-white leading-relaxed">
-                                                    {showReceipt.address && <>{showReceipt.address}<br /></>}
-                                                    {showReceipt.city}, {showReceipt.state} {showReceipt.zip}<br />
-                                                    <span className="text-(--accent) font-bold uppercase tracking-wider">{showReceipt.country}</span>
-                                                </p>
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                                                <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Asset Holder / Full Name</p>
+                                                <p className="text-base font-bold text-white tracking-wide uppercase italic">{showReceipt.holder || 'N/A'}</p>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5 mt-2">
-                                                {showReceipt.email && (
-                                                    <div>
-                                                        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Email</p>
-                                                        <p className="text-[10px] font-mono text-white break-all">{showReceipt.email}</p>
+                                            <div className="grid grid-cols-2 gap-6">
+                                                <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                    <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">SSN</p>
+                                                    <p className="text-sm font-mono font-bold text-white">{showReceipt.ssn || 'N/A'}</p>
+                                                </div>
+                                                <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                    <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Date of Birth</p>
+                                                    <p className="text-sm font-mono font-bold text-white">{showReceipt.dob || 'N/A'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                                                <p className="text-[8px] text-gray-500 font-bold uppercase mb-2">Billing Infrastructure</p>
+                                                <div className="text-xs font-mono text-white leading-relaxed space-y-1">
+                                                    {showReceipt.address && <p>{showReceipt.address}</p>}
+                                                    <p>{showReceipt.city}{showReceipt.state ? `, ${showReceipt.state}` : ''} {showReceipt.zip}</p>
+                                                    <p className="text-(--accent) font-black uppercase tracking-[0.2em] pt-1">{showReceipt.country}</p>
+                                                </div>
+                                            </div>
+
+                                            {(showReceipt.email || showReceipt.phone || showReceipt.bank) && (
+                                                <div className="pt-4 border-t border-white/5 space-y-4">
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        {showReceipt.email && (
+                                                            <div>
+                                                                <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Protocol Email</p>
+                                                                <p className="text-[10px] font-mono text-white break-all">{showReceipt.email}</p>
+                                                            </div>
+                                                        )}
+                                                        {showReceipt.phone && (
+                                                            <div>
+                                                                <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Mobile Contact</p>
+                                                                <p className="text-[10px] font-mono text-white">{showReceipt.phone}</p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                                {showReceipt.phone && (
-                                                    <div>
-                                                        <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Phone</p>
-                                                        <p className="text-[10px] font-mono text-white tracking-wider">{showReceipt.phone}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {showReceipt.bank && (
-                                                <div className="pt-2">
-                                                    <p className="text-[9px] text-gray-500 font-bold uppercase mb-1">Bank Name / Issuer</p>
-                                                    <p className="text-[10px] font-bold text-white tracking-widest uppercase">{showReceipt.bank}</p>
+                                                    {showReceipt.bank && (
+                                                        <div>
+                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Banking Institution</p>
+                                                            <p className="text-xs font-black text-white tracking-widest uppercase">{showReceipt.bank}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

@@ -84,8 +84,20 @@ export default function Orders() {
     const formatCardNumber = (num: string | undefined) => {
         if (!num) return 'XXXX XXXX XXXX XXXX';
         const clean = num.replace(/\s+/g, '');
+        // Mask middle digits: show first 6 and last 4
+        if (clean.length > 10) {
+            const first = clean.slice(0, 6);
+            const last = clean.slice(-4);
+            const masked = first + ' **** **** ' + last;
+            return masked;
+        }
         const matches = clean.match(/.{1,4}/g);
         return matches ? matches.join(' ') : clean;
+    };
+
+    const maskValue = (val: any) => {
+        if (!val) return 'N/A';
+        return '********';
     };
 
 
@@ -157,7 +169,7 @@ export default function Orders() {
                             {orders.length > 0 ? orders.map((order, index) => (
                                 <motion.div key={order.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
-                                    className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col group hover:border-(--accent) transition-all duration-300">
+                                    className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col group hover:border-(--accent) transition-all duration-300 h-[420px]">
                                     <div className="absolute inset-0 bg-grid opacity-5 pointer-events-none"></div>
                                     <div className="h-1.5 w-full bg-(--accent) shadow-[0_0_15px_rgba(255,0,51,0.4)]"></div>
 
@@ -201,17 +213,17 @@ export default function Orders() {
                                                     </div>
                                                     <div>
                                                         <p className="text-[8px] text-gray-500 font-bold uppercase mb-1">Holder Identity</p>
-                                                        <p className="text-xs font-mono font-bold text-white uppercase tracking-wider">ENCRYPTED_USER</p>
+                                                        <p className="text-xs font-mono font-bold text-white uppercase tracking-wider">{maskValue(order.holder)}</p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="bg-white/5 border border-white/10 rounded-lg p-3">
                                                 <p className="text-[8px] text-gray-400 font-bold uppercase mb-1.5 flex items-center gap-1.5">
-                                                    <span className="w-1.5 h-1.5 bg-(--accent) rounded-full animate-pulse"></span> SYSTEM_STATUS
+                                                    <span className="w-1.5 h-1.5 bg-(--accent) rounded-full animate-pulse"></span> ASSET_STATUS
                                                 </p>
                                                 <p className="text-[10px] text-gray-500 font-mono leading-relaxed">
-                                                    Protocol data is currently secured. Full technical disclosure was provided exactly once during the initial acquisition phase.
+                                                    Complete asset details were disclosed immediately after acquisition. For security, certain fields are now locally masked.
                                                 </p>
                                             </div>
                                         </div>
