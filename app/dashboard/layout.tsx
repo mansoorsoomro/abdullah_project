@@ -7,8 +7,6 @@ import Image from 'next/image';
 import type { User } from '../../types';
 import { DashboardContext } from './DashboardContext';
 import GridBackground from '../theme/GridBackgroundstub';
-import { NotificationToast } from '../components/NotificationToast';
-
 
 export default function DashboardLayout({
     children,
@@ -25,11 +23,9 @@ export default function DashboardLayout({
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [copied, setCopied] = useState(false);
-    const [minDeposit, setMinDeposit] = useState(7000);
 
     // Notification State
-    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info'; id?: number } | null>(null);
-
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     const router = useRouter();
     const pathname = usePathname();
@@ -52,19 +48,6 @@ export default function DashboardLayout({
     }, []);
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const response = await fetch('/api/settings');
-                const data = await response.json();
-                if (data.settings && data.settings.minDepositAmount) {
-                    setMinDeposit(data.settings.minDepositAmount);
-                }
-            } catch (err) {
-                console.error("Failed to fetch settings", err);
-            }
-        };
-        fetchSettings();
-
         const userData = localStorage.getItem('user');
         if (!userData) {
             router.push('/login');
@@ -101,8 +84,8 @@ export default function DashboardLayout({
 
         // Validate minimum deposit amount
         const depositAmount = parseFloat(amount);
-        if (depositAmount < minDeposit) {
-            setError(`Minimum deposit amount is $${minDeposit} USDT`);
+        if (depositAmount < 7000) {
+            setError('Minimum deposit amount is $7000 USDT');
             return;
         }
 
@@ -145,10 +128,9 @@ export default function DashboardLayout({
     const openDepositModal = () => setShowDeposit(true);
     const closeDepositModal = () => setShowDeposit(false);
     const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
-        setNotification({ message, type, id: Date.now() });
-        setTimeout(() => setNotification(null), 3500);
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 3000);
     };
-
 
     if (!user) {
         return (
@@ -206,12 +188,62 @@ export default function DashboardLayout({
 
                 {/* Content wrapper with relative positioning */}
                 <div className="relative z-10">
-                    {/* ── Premium Notification Toast ── */}
-                    <NotificationToast
-                        notification={notification}
-                        onClose={() => setNotification(null)}
-                        duration={3500}
-                    />
+                    {/* Notification Toast - High Visibility Center Pop */}
+                    <AnimatePresence>
+                        {notification && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -50, x: '-50%' }}
+                                animate={{ opacity: 1, y: 0, x: '-50%' }}
+                                exit={{ opacity: 0, y: -50, x: '-50%' }}
+                                className={`fixed top-6 left-1/2 z-9999 min-w-[320px] md:min-w-[400px] p-0 rounded-lg shadow-2xl backdrop-blur-xl border flex flex-col overflow-hidden ${notification.type === 'success' ? 'bg-black/90 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]' :
+                                    notification.type === 'error' ? 'bg-black/90 border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.3)]' :
+                                        'bg-black/90 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-4 p-5 relative">
+                                    {/* Icon Box */}
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold border ${notification.type === 'success' ? 'bg-green-500/10 border-green-500 text-green-500' :
+                                        notification.type === 'error' ? 'bg-red-500/10 border-red-500 text-red-500' :
+                                            'bg-blue-500/10 border-blue-500 text-blue-500'
+                                        }`}>
+                                        {notification.type === 'success' ? '✓' : notification.type === 'error' ? '!' : 'i'}
+                                    </div>
+
+                                    {/* Message */}
+                                    <div className="flex-1">
+                                        <h4 className={`text-xs font-black tracking-widest mb-1 ${notification.type === 'success' ? 'text-green-500' :
+                                            notification.type === 'error' ? 'text-red-500' :
+                                                'text-blue-500'
+                                            }`}>
+                                            {notification.type === 'success' ? 'TRANSACTION SUCCESS' : notification.type === 'error' ? 'TRANSACTION ERROR' : 'NOTIFICATION'}
+                                        </h4>
+                                        <p className="text-sm font-bold text-white tracking-wide leading-tight">
+                                            {notification.message}
+                                        </p>
+                                    </div>
+
+                                    {/* Close Button */}
+                                    <button
+                                        onClick={() => setNotification(null)}
+                                        className="text-gray-500 hover:text-white transition-colors"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {/* Progress Bar Animation */}
+                                <motion.div
+                                    initial={{ width: "100%" }}
+                                    animate={{ width: "0%" }}
+                                    transition={{ duration: 3, ease: "linear" }}
+                                    className={`h-1 w-full ${notification.type === 'success' ? 'bg-green-500' :
+                                        notification.type === 'error' ? 'bg-red-500' :
+                                            'bg-blue-500'
+                                        }`}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Header */}
                     <motion.header
@@ -306,16 +338,6 @@ export default function DashboardLayout({
                                     <span className="block skew-x-15 group-hover:scale-105 transition-transform relative z-10">MY ORDERS</span>
                                     {isActive('/dashboard/orders') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
                                 </button>
-                                <button
-                                    onClick={() => router.push('/dashboard/offers')}
-                                    className={`relative px-12 md:px-16 py-3 mx-4 text-sm font-black tracking-[0.2em] transition-all skew-x-[-15deg] border-2 group ${isActive('/dashboard/offers')
-                                        ? 'bg-(--accent) text-black border-(--accent) shadow-[0_0_25px_var(--accent)] scale-110 z-10'
-                                        : 'bg-black/60 text-gray-500 border-gray-800 hover:border-(--accent) hover:text-white! hover:shadow-[0_0_15px_var(--accent)] hover:bg-black'
-                                        }`}
-                                >
-                                    <span className="block skew-x-15 group-hover:scale-105 transition-transform relative z-10">OFFERS</span>
-                                    {isActive('/dashboard/offers') && <div className="absolute inset-0 bg-white/20 animate-pulse"></div>}
-                                </button>
                             </div>
                         </div>
                     </motion.nav>
@@ -402,14 +424,14 @@ export default function DashboardLayout({
                                                     type="number"
                                                     value={amount}
                                                     onChange={(e) => setAmount(e.target.value)}
-                                                    placeholder={`Minimum: $${minDeposit}`}
+                                                    placeholder="Minimum: $7000"
                                                     className="w-full bg-black border border-gray-800 p-3 text-white focus:border-(--accent) focus:shadow-[0_0_15px_rgba(255,0,51,0.1)] focus:outline-none transition-all rounded font-mono font-bold"
                                                     required
-                                                    min={minDeposit}
+                                                    min="7000"
                                                     step="0.01"
                                                 />
                                                 <p className="text-[10px] text-gray-500 mt-2 font-mono tracking-wide">
-                                                    ⚠ MINIMUM DEPOSIT: ${minDeposit} USDT
+                                                    ⚠ MINIMUM DEPOSIT: $7000 USDT
                                                 </p>
                                             </div>
                                             <div>

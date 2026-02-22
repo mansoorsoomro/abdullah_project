@@ -12,11 +12,6 @@ export default function Dashboard() {
     const [purchasing, setPurchasing] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
 
-    // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const itemsPerPage = 9;
-
     const { openDepositModal, showNotification, refreshUser } = useDashboard();
     const router = useRouter();
 
@@ -25,18 +20,14 @@ export default function Dashboard() {
         if (userData) {
             setUser(JSON.parse(userData));
         }
-        fetchCards(currentPage);
-    }, [currentPage]);
+        fetchCards();
+    }, []);
 
-    const fetchCards = async (page: number) => {
-        setLoading(true);
+    const fetchCards = async () => {
         try {
-            const response = await fetch(`/api/cards?page=${page}&limit=${itemsPerPage}`);
+            const response = await fetch('/api/cards');
             const data = await response.json();
             setCards(data.cards || []);
-            if (data.pagination) {
-                setTotalPages(data.pagination.pages);
-            }
         } catch (error) {
             console.error('Failed to fetch cards:', error);
         } finally {
@@ -96,15 +87,12 @@ export default function Dashboard() {
 
     // Card number: show last 4
     const formatCardNumber = (num: string) => {
-        if (!num) return 'XXXX XXXX XXXX XXXX';
-        const clean = num.replace(/\s+/g, '');
-        // Split into blocks of 4 for standard CC format
-        const matches = clean.match(/.{1,4}/g);
-        return matches ? matches.join(' ') : clean;
+        if (!num) return '**** **** **** 0000';
+        const last4 = num.slice(-4);
+        return `**** **** **** ${last4}`;
     };
 
-
-    if (loading && cards.length === 0) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="cyber-spinner"></div>
@@ -189,7 +177,7 @@ export default function Dashboard() {
                                 <div className="relative w-full h-full bg-[#111] rounded-2xl shadow-xl overflow-hidden text-white p-6 border border-gray-800 group-hover:border-(--accent) transition-colors duration-300 flex flex-col justify-between">
 
                                     {/* Background texture */}
-                                    <div className="absolute inset-0 opacity-20 bg-grid pointer-events-none"></div>
+                                    <div className="absolute inset-0 opacity-20 bg-[url('/grid.png')] bg-cover"></div>
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-(--accent)/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                                     {/* Top Row: Chip and Price */}
@@ -212,26 +200,22 @@ export default function Dashboard() {
 
                                     {/* Card Number */}
                                     <div className="mt-2" style={{ padding: "10px" }}>
-                                        <p className="text-xs font-bold text-gray-500 mb-1 tracking-widest uppercase">{card.bank || 'DIGITAL ASSET'}</p>
                                         <p className="text-xl md:text-2xl font-mono font-bold tracking-widest drop-shadow-md whitespace-nowrap">
-                                            {formatCardNumber(card.cardNumber)}
+                                            {formatCardNumber(card.cardNumber).replace(/\*/g, 'X')}
                                         </p>
-
                                     </div>
 
                                     {/* Bottom Info */}
                                     <div className="flex justify-between items-end mt-2 px-3" style={{ padding: "12px" }}>
                                         <div>
-                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Proxy Status</p>
-                                            <p className="font-mono font-bold text-xs ml-0 tracking-wide uppercase text-(--accent)">
-                                                {card.proxy ? 'ENCRYPTED' : 'NOT SET'}
-                                            </p>
+                                            <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Card Holder</p>
+                                            <p className="font-mono font-bold text-xs ml-3 tracking-wide uppercase">{maskStart(card.holder).replace(/\*/g, 'X')}</p>
                                         </div>
                                         <div className="flex flex-col items-end">
                                             <p className="text-[9px] uppercase opacity-75 font-bold mb-0.5">Expires</p>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry || 'XX/XX'}</p>
-                                                <h3 className="text-xl font-black italic tracking-tighter leading-none uppercase">{card.type || 'VISA'}</h3>
+                                                <p className="font-mono font-bold text-xs tracking-wide">{card.expiry ? card.expiry.replace(/\*\*/g, 'XX/XX') : '12/XX'}</p>
+                                                <h3 className="text-xl font-black italic tracking-tighter leading-none">VISA</h3>
                                             </div>
                                         </div>
                                     </div>
@@ -265,8 +249,7 @@ export default function Dashboard() {
                                             <div className="h-0.5 w-32 bg-white/20"></div>
                                         </div>
                                         <div className="text-right">
-                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80 uppercase">{card.type || 'VISA'}</h3>
-
+                                            <h3 className="text-xl font-black italic text-white tracking-tighter mb-2 opacity-80">VISA</h3>
                                         </div>
                                     </div>
 
@@ -292,44 +275,8 @@ export default function Dashboard() {
                 ))}
             </div>
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="p-4 flex justify-center gap-2 mt-8">
-                    <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
-                    >
-                        PREV
-                    </button>
-                    <div className="flex items-center gap-2">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1)
-                            .slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))
-                            .map(pageNum => (
-                                <button
-                                    key={pageNum}
-                                    onClick={() => setCurrentPage(pageNum)}
-                                    className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold transition-colors ${currentPage === pageNum
-                                        ? 'bg-(--accent) text-black'
-                                        : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
-                                        }`}
-                                >
-                                    {pageNum}
-                                </button>
-                            ))}
-                    </div>
-                    <button
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="px-4 py-2 bg-[#1a1a1a] text-gray-400 rounded disabled:opacity-50 hover:text-white transition-colors text-xs font-bold"
-                    >
-                        NEXT
-                    </button>
-                </div>
-            )}
-
             {/* Empty state */}
-            {cards.length === 0 && !loading && (
+            {cards.length === 0 && (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

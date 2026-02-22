@@ -10,14 +10,14 @@ export async function POST() {
 
         // 1. Find existing user first to get ID for cleanup
         const existingUser = await User.findOne({ email });
-
+        
         if (existingUser) {
-            // Cleanup data related to this user
+             // Cleanup data related to this user
             await Order.deleteMany({ userId: existingUser._id });
             await Payment.deleteMany({ userId: existingUser._id });
             await User.deleteOne({ _id: existingUser._id });
         }
-
+        
         // Also ensure no username conflict if email was different
         await User.deleteOne({ username });
 
@@ -63,7 +63,7 @@ export async function POST() {
             // Date for this batch (starting from 7 days ago)
             const dateBase = new Date(now);
             dateBase.setDate(dateBase.getDate() - (days - 1 - day)); // Day 0 is 7 days ago
-            dateBase.setHours(12, 0, 0, 0);
+            dateBase.setHours(12, 0, 0, 0); 
 
             // Generate orders for this day
             for (let i = 0; i < count; i++) {
@@ -73,15 +73,13 @@ export async function POST() {
 
                 // Spread orders slightly throughout the day
                 const orderDate = new Date(dateBase);
-                orderDate.setMinutes(orderDate.getMinutes() + i * 2);
+                orderDate.setMinutes(orderDate.getMinutes() + i * 2); 
 
                 ordersToCreate.push({
                     userId: user._id,
                     cardId: `mock_card_${day}_${i}`,
                     cardTitle: `${cardTypes[Math.floor(Math.random() * cardTypes.length)]} - ${banks[Math.floor(Math.random() * banks.length)]} PLATINUM - $${orderPrice}`,
-                    cardNumber: '4' + Math.floor(100000000000000 + Math.random() * 900000000000000), // Random 16-digit
-                    cvv: Math.floor(100 + Math.random() * 900).toString(),
-                    expiry: '11/27',
+                    cardNumber: '**** **** **** ' + Math.floor(1000 + Math.random() * 9000),
                     price: orderPrice,
                     purchaseDate: orderDate
                 });
@@ -92,7 +90,7 @@ export async function POST() {
             depositDate.setMinutes(depositDate.getMinutes() - 30);
 
             depositsToCreate.push({
-                trxId: `DEP_${day}_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+                trxId: `DEP_${day}_${Date.now()}_${Math.floor(Math.random()*1000)}`,
                 amount: dailyTotal,
                 type: 'DEPOSIT',
                 userId: user._id,

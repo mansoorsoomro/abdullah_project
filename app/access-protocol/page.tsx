@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -9,28 +9,12 @@ import GridBackground from '../theme/GridBackgroundstub';
 
 export default function AccessProtocol() {
     const [trxId, setTrxId] = useState('');
-    const [amount, setAmount] = useState('2000'); // Fixed fee originally, now fetches
+    const [amount] = useState('2000'); // Fixed fee
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [copied, setCopied] = useState(false);
     const [showQRModal, setShowQRModal] = useState(false);
     const router = useRouter();
-
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const response = await fetch('/api/settings');
-                const data = await response.json();
-                if (data.settings && data.settings.signupAmount) {
-                    setAmount(data.settings.signupAmount.toString());
-                }
-            } catch (err) {
-                console.error("Failed to fetch settings", err);
-            }
-        };
-        fetchSettings();
-    }, []);
 
     const walletAddress = 'TP98WPQ8abeK9cjh1VQzjzvR6xCzsZHAYn';
 

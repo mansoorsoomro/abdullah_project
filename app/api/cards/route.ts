@@ -3,33 +3,12 @@ import { connectDB } from '../../../lib/db';
 import { Card } from '../../../lib/models';
 import { decryptCardData } from '../../../lib/encryption';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         await connectDB();
+        const cards = await Card.find({ forSale: true }).sort({ createdAt: -1 });
 
-        const { searchParams } = new URL(request.url);
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '9'); // Default to 9 to match frontend grid
-        const skip = (page - 1) * limit;
-
-        // Fetch cards with pagination and count total
-        const [cards, total] = await Promise.all([
-            Card.find({ forSale: true })
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit),
-            Card.countDocuments({ forSale: true })
-        ]);
-
-        const maskCardNumber = (num: string) => {
-            if (!num) return 'XXXX XXXX XXXX XXXX';
-            const clean = num.replace(/\s+/g, '');
-            // Show first 6 digits, asterisk the rest
-            const bin = clean.slice(0, 6);
-            return bin.padEnd(clean.length, '*');
-        };
-
-        const formattedCards = cards.map((card: any) => {
+        const formattedCards = cards.map((card: { toObject: () => any; _id: { toString: () => any; }; title: any; price: any; description: any; forSale: any; expiry: any; bank: any; type: any; zip: any; city: any; state: any; country: any; userAgent: any; videoLink: any; }) => {
             const decrypted = decryptCardData(card.toObject());
             return {
                 id: card._id.toString(),
@@ -37,29 +16,29 @@ export async function GET(request: NextRequest) {
                 price: card.price,
                 description: card.description,
                 forSale: card.forSale,
-                cardNumber: maskCardNumber(decrypted.cardNumber),
+                cardNumber: decrypted.cardNumber,
+                cvv: decrypted.cvv,
                 expiry: card.expiry,
+                holder: decrypted.holder,
+                address: decrypted.address,
                 bank: card.bank,
                 type: card.type,
                 zip: card.zip,
                 city: card.city,
                 state: card.state,
                 country: card.country,
+                ssn: decrypted.ssn,
+                dob: decrypted.dob,
+                email: decrypted.email,
+                phone: decrypted.phone,
                 userAgent: card.userAgent,
-                videoLink: card.videoLink,
-                proxy: card.proxy
+                password: decrypted.password,
+                ip: decrypted.ip,
+                videoLink: card.videoLink
             };
         });
 
-
-        return NextResponse.json({
-            cards: formattedCards,
-            pagination: {
-                total,
-                pages: Math.ceil(total / limit),
-                current: page
-            }
-        });
+        return NextResponse.json({ cards: formattedCards });
     } catch (error) {
         console.error('Get cards error:', error);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });
