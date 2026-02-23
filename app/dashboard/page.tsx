@@ -72,6 +72,9 @@ export default function Dashboard() {
                     refreshUser(); // Update Layout balance
                 }
 
+                // Remove the purchased card from the local state so it disappears from the marketplace
+                setCards(prevCards => prevCards.filter(c => c.id !== cardId));
+
                 // Show Receipt instead of immediate redirect
                 setShowReceipt(data.order);
                 showNotification('✓ Purchase successful! Receipt generated.', 'success');
@@ -346,7 +349,7 @@ export default function Dashboard() {
                                             Primary Protocol Data
                                         </p>
                                         <p className="text-3xl font-black tracking-[0.25em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-6">
-                                            {showReceipt?.cardNumber}
+                                            {formatCardNumber(showReceipt?.cardNumber || '')}
                                         </p>
                                         <div className="grid grid-cols-3 gap-4 pt-2 border-t border-white/5">
                                             <div>

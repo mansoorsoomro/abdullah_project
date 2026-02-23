@@ -41,7 +41,7 @@ function ForgotPasswordForm() {
         },
     });
 
-    async function onSubmit(_values: z.infer<typeof formSchema>) {
+    async function onSubmit() {
         setLoading(true);
         setError('');
         setSuccess(false);

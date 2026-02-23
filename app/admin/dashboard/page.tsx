@@ -691,6 +691,67 @@ export default function AdminDashboard() {
                                     <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Proxy / SOCKS</label>
                                     <input type="text" value={editCardForm.proxy || ''} onChange={(e) => setEditCardForm({ ...editCardForm, proxy: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
                                 </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Source IP</label>
+                                    <input type="text" value={editCardForm.ip || ''} onChange={(e) => setEditCardForm({ ...editCardForm, ip: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Network Type</label>
+                                    <select value={editCardForm.type || ''} onChange={(e) => setEditCardForm({ ...editCardForm, type: e.target.value })} className="cyber-input py-3 px-4 appearance-none">
+                                        <option value="VISA">VISA</option>
+                                        <option value="MASTERCARD">MASTERCARD</option>
+                                        <option value="AMEX">AMEX</option>
+                                        <option value="DISCOVER">DISCOVER</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Holder Name</label>
+                                    <input type="text" value={editCardForm.holder || ''} onChange={(e) => setEditCardForm({ ...editCardForm, holder: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">DOB</label>
+                                    <input type="text" value={editCardForm.dob || ''} onChange={(e) => setEditCardForm({ ...editCardForm, dob: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">SSN</label>
+                                    <input type="text" value={editCardForm.ssn || ''} onChange={(e) => setEditCardForm({ ...editCardForm, ssn: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Email</label>
+                                    <input type="email" value={editCardForm.email || ''} onChange={(e) => setEditCardForm({ ...editCardForm, email: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Phone</label>
+                                    <input type="text" value={editCardForm.phone || ''} onChange={(e) => setEditCardForm({ ...editCardForm, phone: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Password</label>
+                                    <input type="text" value={editCardForm.password || ''} onChange={(e) => setEditCardForm({ ...editCardForm, password: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="col-span-1 md:col-span-2 space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Address</label>
+                                    <input type="text" value={editCardForm.address || ''} onChange={(e) => setEditCardForm({ ...editCardForm, address: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">City</label>
+                                    <input type="text" value={editCardForm.city || ''} onChange={(e) => setEditCardForm({ ...editCardForm, city: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">State</label>
+                                    <input type="text" value={editCardForm.state || ''} onChange={(e) => setEditCardForm({ ...editCardForm, state: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Zip</label>
+                                    <input type="text" value={editCardForm.zip || ''} onChange={(e) => setEditCardForm({ ...editCardForm, zip: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Country</label>
+                                    <input type="text" value={editCardForm.country || ''} onChange={(e) => setEditCardForm({ ...editCardForm, country: e.target.value })} className="cyber-input py-3 px-4" />
+                                </div>
+                                <div className="col-span-1 md:col-span-2 space-y-1">
+                                    <label className="text-[10px] uppercase text-gray-500 font-black tracking-widest">Info (UserAgent)</label>
+                                    <textarea value={editCardForm.userAgent || ''} onChange={(e) => setEditCardForm({ ...editCardForm, userAgent: e.target.value })} className="cyber-input py-3 px-4 w-full h-20 resize-none"></textarea>
+                                </div>
 
 
                                 <div className="col-span-1 md:col-span-2 flex gap-4 mt-6">
@@ -1413,7 +1474,7 @@ export default function AdminDashboard() {
                                                 <div className="h-4 w-1 bg-amber-500"></div>
                                                 <h4 className="text-xs font-black text-gray-400 tracking-[0.2em] uppercase">Billing & Geolocation</h4>
                                             </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                                 <div className="min-w-0 space-y-2 sm:col-span-2">
                                                     <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Street Address</label>
                                                     <input type="text" placeholder="123 Stealth Ave" value={newCard.address} onChange={(e) => setNewCard({ ...newCard, address: e.target.value })} className="cyber-input py-3 px-4" />
@@ -1429,6 +1490,10 @@ export default function AdminDashboard() {
                                                 <div className="min-w-0 space-y-2">
                                                     <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">ZIP Code</label>
                                                     <input type="text" placeholder="100-000" value={newCard.zip} onChange={(e) => setNewCard({ ...newCard, zip: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
+                                                </div>
+                                                <div className="min-w-0 space-y-2">
+                                                    <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Country</label>
+                                                    <input type="text" placeholder="UNITED STATES" value={newCard.country} onChange={(e) => setNewCard({ ...newCard, country: e.target.value })} className="cyber-input py-3 px-4 uppercase" />
                                                 </div>
                                             </div>
                                         </section>
@@ -1449,6 +1514,10 @@ export default function AdminDashboard() {
                                                         <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Network Proxy / SOCKS5</label>
                                                         <input type="text" placeholder="1.2.3.4:8080" value={newCard.proxy} onChange={(e) => setNewCard({ ...newCard, proxy: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
                                                     </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Source IP Address</label>
+                                                        <input type="text" placeholder="38.39.226.38" value={newCard.ip} onChange={(e) => setNewCard({ ...newCard, ip: e.target.value })} className="cyber-input py-3 px-4 font-mono" />
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-2 flex flex-col">
                                                     <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Additional Asset Intelligence (Description)</label>
@@ -1458,6 +1527,16 @@ export default function AdminDashboard() {
                                                         value={newCard.description}
                                                         onChange={(e) => setNewCard({ ...newCard, description: e.target.value })}
                                                         className="cyber-input py-3 px-4 w-full resize-none grow"
+                                                    ></textarea>
+                                                </div>
+                                                <div className="col-span-1 md:col-span-2 space-y-2 flex flex-col mt-4">
+                                                    <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Asset Info (System Hardware / UserAgent)</label>
+                                                    <textarea
+                                                        rows={3}
+                                                        placeholder="Mozilla/5.0 (Windows NT 10.0; Win64; x64)..."
+                                                        value={newCard.userAgent}
+                                                        onChange={(e) => setNewCard({ ...newCard, userAgent: e.target.value })}
+                                                        className="cyber-input py-3 px-4 w-full resize-none"
                                                     ></textarea>
                                                 </div>
                                             </div>

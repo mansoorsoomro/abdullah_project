@@ -82,7 +82,10 @@ export async function POST(req: NextRequest) {
                 ip: decrypt(orderData.ip),
                 password: decrypt(orderData.password),
                 proxy: decrypt(orderData.proxy),
-                // Cover type/bank just in case they were encrypted by accident or previous logic
+                zip: decrypt(orderData.zip),
+                city: decrypt(orderData.city),
+                state: decrypt(orderData.state),
+                country: decrypt(orderData.country),
                 type: decrypt(orderData.type),
                 bank: decrypt(orderData.bank),
             },
