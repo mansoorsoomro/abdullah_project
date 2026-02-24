@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Payment, Card, Order, User, ActivityLog, BundleOrder, Offer } from '../../../types';
-import { type NotifState, type ConfirmState } from '../../components/NotificationToast';
+import { NotificationToast, ConfirmDialog, type NotifState, type ConfirmState } from '../../components/NotificationToast';
 import AdminGridBackground from '../../theme/AdminGridBackground';
 import {
     Trash2, Edit, Key, UserX,
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
 
     // Notification State
     const [notification, setNotification] = useState<NotifState | null>(null);
-    const [, setConfirmDialog] = useState<ConfirmState | null>(null);
+    const [confirmDialog, setConfirmDialog] = useState<ConfirmState | null>(null);
 
     const router = useRouter();
 
@@ -582,6 +582,7 @@ export default function AdminDashboard() {
         showConfirm({
             title: 'SECURITY WARNING',
             message: `You are about to login as ${user.username}. This will grant you full access to their account. Proceed?`,
+            confirmLabel: 'CONFIRM',
             onConfirm: async () => {
                 try {
                     const userId = user.id || (user as unknown as { _id: string })._id;
@@ -653,6 +654,16 @@ export default function AdminDashboard() {
 
     return (
         <div className="min-h-screen bg-black relative overflow-hidden selection:bg-red-500/30">
+            {/* ── Global Notification Toast ── */}
+            <NotificationToast
+                notification={notification}
+                onClose={() => setNotification(null)}
+            />
+            {/* ── Global Confirm Dialog ── */}
+            <ConfirmDialog
+                state={confirmDialog}
+                onClose={() => setConfirmDialog(null)}
+            />
             {/* Edit Card Modal */}
             <AnimatePresence>
                 {editingCard && (
