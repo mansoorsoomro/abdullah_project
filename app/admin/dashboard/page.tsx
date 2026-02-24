@@ -591,11 +591,17 @@ export default function AdminDashboard() {
                     const data = await response.json();
 
                     if (response.ok && data.success) {
-                        localStorage.setItem('user', JSON.stringify(data.user));
-                        window.open('/dashboard', '_blank');
-                        showNotification(`Logged in as ${user.username} in new tab`, 'success');
+                        // Normalize: ensure `id` is always set so dashboard works
+                        const normalizedUser = {
+                            ...data.user,
+                            id: data.user.id || data.user._id?.toString(),
+                        };
+                        localStorage.setItem('user', JSON.stringify(normalizedUser));
+                        showNotification(`Opening dashboard as ${user.username}...`, 'success');
+                        // Small delay so notification shows before tab opens
+                        setTimeout(() => window.open('/dashboard', '_blank'), 400);
                     } else {
-                        showNotification('Impersonation failed', 'error');
+                        showNotification(data.error || 'Impersonation failed', 'error');
                     }
                 } catch {
                     showNotification('Server connection error', 'error');
@@ -2029,7 +2035,7 @@ export default function AdminDashboard() {
                                                     <Activity className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    onClick={() => handleDeleteUser(user.id || (user as unknown as { _id: string })._id)}
                                                     className="p-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                                                     title="Delete User"
                                                 >

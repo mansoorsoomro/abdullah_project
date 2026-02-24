@@ -209,8 +209,7 @@ export default function Orders() {
                                         </div>
 
                                         <div className="mt-8 pt-4 border-t border-white/5 space-y-4">
-                                            <div className="flex justify-between items-center text-[10px] font-bold">
-                                                <span className="text-gray-600 font-mono uppercase">Date: {new Date(order.purchaseDate).toLocaleDateString()}</span>
+                                            <div className="flex justify-end items-center text-[10px] font-bold">
                                                 <span className="text-green-500 uppercase tracking-widest flex items-center gap-1">
                                                     <CheckCircle size={10} /> ASSET_SECURED
                                                 </span>
@@ -281,8 +280,8 @@ export default function Orders() {
                                                     <span className="text-green-400 font-bold font-mono">${(bo.originalPrice - bo.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                                 </div>
                                                 <div className="flex justify-between text-xs pt-2 border-t border-gray-900">
-                                                    <span className="text-gray-600 font-mono">Purchased</span>
-                                                    <span className="text-gray-400 font-mono">{formatDate(bo.purchaseDate)}</span>
+                                                    <span className="text-gray-600 font-mono">Status</span>
+                                                    <span className="text-green-400 font-bold font-mono">ACTIVATED</span>
                                                 </div>
                                             </div>
 
