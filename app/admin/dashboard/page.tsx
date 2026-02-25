@@ -56,8 +56,9 @@ export default function AdminDashboard() {
 
 
     // Pagination for Cards
-    const [cardsPage] = useState(1);
+    const [cardsPage, setCardsPage] = useState(1);
     const cardsPerPage = 9;
+    const [cardsSearch, setCardsSearch] = useState('');
 
     // Activity Logs
     const [userLogs, setUserLogs] = useState<ActivityLog[]>([]);
@@ -220,7 +221,7 @@ export default function AdminDashboard() {
 
     const fetchCards = async () => {
         try {
-            const response = await fetch('/api/admin/cards');
+            const response = await fetch('/api/admin/cards', { cache: 'no-store' });
             const data = await response.json();
             setCards(data.cards || []);
         } catch (error) {
@@ -1560,16 +1561,44 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                     >
-                        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-800">
-                            <h2 className="text-2xl font-black tracking-widest text-white">
-                                CARD INVENTORY <span className="text-(--accent) text-lg align-top ml-2">({cards.length})</span>
-                            </h2>
-                            <button
-                                onClick={() => setShowAddCard(!showAddCard)}
-                                className="px-8 py-3 text-sm font-black tracking-widest transition-all duration-300 -skew-x-15 border-2 border-(--accent) bg-(--accent) text-black hover:bg-black hover:text-(--accent) shadow-[0_0_15px_var(--accent)] hover:shadow-[0_0_25px_var(--accent)]"
-                            >
-                                <span className="block skew-x-15">{showAddCard ? 'CANCEL ACTION' : '+ ADD NEW CARD'}</span>
-                            </button>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-4 border-b border-gray-800">
+                            <div className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-black tracking-widest text-white flex items-center gap-3">
+                                    CARD INVENTORY <span className="text-(--accent) text-lg align-top">({cards.length})</span>
+                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={fetchCards}
+                                        className="text-[9px] font-black text-gray-500 hover:text-(--accent) transition-colors tracking-widest uppercase flex items-center gap-1"
+                                    >
+                                        <Activity className="w-3 h-3" /> REFRESH DATA
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                                <div className="relative group flex-1 md:flex-initial min-w-[200px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-(--accent) transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="SEARCH INVENTORY..."
+                                        className="w-full bg-[#0a0a0a] border border-gray-800 py-2.5 pl-10 pr-4 rounded text-xs font-bold text-white focus:border-(--accent) outline-none transition-all tracking-widest"
+                                        onChange={(e) => {
+                                            const term = e.target.value.toLowerCase();
+                                            // Handle search locally or filter cards
+                                            // Since cards is large, local filtering is fine
+                                            setCardsSearch(term);
+                                            setCardsPage(1);
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setShowAddCard(!showAddCard)}
+                                    className="px-6 py-2.5 text-xs font-black tracking-widest transition-all duration-300 -skew-x-12 border-2 border-(--accent) bg-(--accent) text-black hover:bg-black hover:text-(--accent) shadow-[0_0_15px_var(--accent)]"
+                                >
+                                    <span className="block skew-x-12">{showAddCard ? 'CANCEL' : '+ ADD NEW CARD'}</span>
+                                </button>
+                            </div>
                         </div>
 
                         {/* Add Card Form */}
@@ -1758,129 +1787,187 @@ export default function AdminDashboard() {
 
                         {/* Cards List */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {cards
-                                .slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)
-                                .map((card, index) => (
-                                    <motion.div
-                                        key={card.id || (card as unknown as { _id: string })._id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                        className="group h-[260px] perspective-1000"
-                                    >
+                            {(() => {
+                                const filtered = cards.filter(c =>
+                                    (c.title || '').toLowerCase().includes(cardsSearch) ||
+                                    (c.country || '').toLowerCase().includes(cardsSearch) ||
+                                    (c.cardNumber || '').toLowerCase().includes(cardsSearch) ||
+                                    (c.bank || '').toLowerCase().includes(cardsSearch)
+                                );
+                                return filtered.slice((cardsPage - 1) * cardsPerPage, cardsPage * cardsPerPage)
+                                    .map((card, index) => (
                                         <motion.div
-                                            className="relative w-full h-full transform-3d"
-                                            whileHover={{ rotateY: 180 }}
-                                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                            key={card.id || (card as unknown as { _id: string })._id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className="group h-[260px] perspective-1000"
                                         >
-                                            {/* FRONT SIDE */}
-                                            <div className="absolute inset-0 backface-hidden z-10">
-                                                <div className={`
-                                                        h-full w-full rounded-2xl overflow-hidden relative border border-white/10 flex flex-col justify-between
-                                                        bg-linear-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-2xl
-                                                        ${!card.forSale ? 'grayscale-[0.8] opacity-60' : ''}
-                                                    `}>
-                                                    {/* Animated holographic shine */}
-                                                    <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none"></div>
+                                            <motion.div
+                                                className="relative w-full h-full transform-3d"
+                                                whileHover={{ rotateY: 180 }}
+                                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                            >
+                                                {/* FRONT SIDE */}
+                                                <div className="absolute inset-0 backface-hidden z-10">
+                                                    <div className={`
+                                                            h-full w-full rounded-2xl overflow-hidden relative border border-white/10 flex flex-col justify-between
+                                                            bg-linear-to-br from-[#1a1a1a] to-[#0a0a0a] shadow-2xl
+                                                            ${!card.forSale ? 'grayscale-[0.8] opacity-60' : ''}
+                                                        `}>
+                                                        {/* Animated holographic shine */}
+                                                        <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none"></div>
 
-                                                    {/* Card Header */}
-                                                    <div className="p-5 flex justify-between items-start">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-(--accent) tracking-widest uppercase mb-1">ASSET_TYPE</span>
-                                                            <h4 className="text-sm font-black text-white tracking-wider uppercase truncate max-w-[150px]">{card.title}</h4>
+                                                        {/* Card Header */}
+                                                        <div className="p-5 flex justify-between items-start">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-(--accent) tracking-widest uppercase mb-1">ASSET_TYPE</span>
+                                                                <h4 className="text-sm font-black text-white tracking-wider uppercase truncate max-w-[150px]">{card.title}</h4>
+                                                            </div>
+                                                            <div className="bg-white/5 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-xs font-black text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+                                                                {card.price} USDT
+                                                            </div>
                                                         </div>
-                                                        <div className="bg-white/5 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-lg text-xs font-black text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
-                                                            {card.price} USDT
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Card Chip & Number */}
-                                                    <div className="px-5 -mt-4">
-                                                        <div className="w-10 h-7 bg-linear-to-br from-yellow-300 to-yellow-600 rounded-md border border-black/20 shadow-inner flex items-center justify-center mb-4">
-                                                            <div className="w-full h-px bg-black/10"></div>
-                                                        </div>
-                                                        <p className="text-lg md:text-xl font-mono font-bold tracking-[0.15em] text-white/90 text-glow">
-                                                            {formatCardNumber(card.cardNumber).replace(/[0-9]/g, (m, i) => i < 14 ? 'X' : m)}
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Card Footer */}
-                                                    <div className="p-5 flex justify-between items-end border-t border-white/5 bg-black/20">
-                                                        <div>
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Holder</p>
-                                                            <p className="text-[10px] font-mono font-bold text-gray-300 truncate max-w-[120px] uppercase">
-                                                                {card.holder || 'CONFIDENTIAL'}
+                                                        {/* Card Chip & Number */}
+                                                        <div className="px-5 -mt-4">
+                                                            <div className="w-10 h-7 bg-linear-to-br from-yellow-300 to-yellow-600 rounded-md border border-black/20 shadow-inner flex items-center justify-center mb-4">
+                                                                <div className="w-full h-px bg-black/10"></div>
+                                                            </div>
+                                                            <p className="text-lg md:text-xl font-mono font-bold tracking-[0.15em] text-white/90 text-glow">
+                                                                {(card.cardNumber || '').substring(0, 4)} •••• •••• {(card.cardNumber || '').slice(-4)}
                                                             </p>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Exp / Type</p>
-                                                            <p className="text-[10px] font-mono font-bold text-gray-300">
-                                                                {card.expiry} <span className="text-(--accent) ml-1 font-black">VISA</span>
-                                                            </p>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Sold Overlay Banner */}
-                                                    {!card.forSale && (
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] z-20 pointer-events-none">
-                                                            <div className="bg-red-600 text-white px-6 py-1.5 font-black text-[10px] tracking-[0.3em] uppercase -rotate-12 border-2 border-white/20 shadow-2xl">
-                                                                TERMINATED / SOLD
+                                                        {/* Bottom Info */}
+                                                        <div className="p-5 flex justify-between items-end border-t border-white/5 bg-black/20">
+                                                            <div>
+                                                                <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Holder</p>
+                                                                <p className="text-[10px] font-mono font-bold text-gray-300 truncate max-w-[120px] uppercase">
+                                                                    {card.holder || 'CONFIDENTIAL'}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Exp / Type</p>
+                                                                <p className="text-[10px] font-mono font-bold text-gray-300">
+                                                                    {card.expiry} <span className="text-(--accent) ml-1 font-black">{card.type || 'ASSET'}</span>
+                                                                </p>
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            {/* BACK SIDE */}
-                                            <div className="absolute inset-0 backface-hidden transform-[rotateY(180deg)] z-20">
-                                                <div className="h-full w-full rounded-2xl bg-[#0a0a0a] border-2 border-(--accent)/30 overflow-hidden relative flex flex-col shadow-2xl">
-                                                    {/* Magnetic Strip */}
-                                                    <div className="w-full h-10 bg-black mt-6"></div>
-
-                                                    <div className="p-6 space-y-4">
-                                                        <div className="flex justify-between items-center">
-                                                            <div className="bg-white/90 h-8 w-2/3 flex items-center justify-end px-3 rounded shadow-inner">
-                                                                <span className="font-mono text-black font-black tracking-widest text-xs">XXX</span>
+                                                        {/* Sold Overlay Banner */}
+                                                        {!card.forSale && (
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] z-20 pointer-events-none">
+                                                                <div className="bg-red-600 text-white px-6 py-1.5 font-black text-[10px] tracking-[0.3em] uppercase -rotate-12 border-2 border-white/20 shadow-2xl">
+                                                                    TERMINATED / SOLD
+                                                                </div>
                                                             </div>
-                                                            <span className="text-[10px] font-black text-(--accent) tracking-widest">CVC_CORE</span>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-2 gap-2 mt-4">
-                                                            <div className="bg-white/5 p-2 rounded border border-white/5">
-                                                                <p className="text-[7px] text-gray-500 font-bold uppercase mb-1">Bank</p>
-                                                                <p className="text-[9px] font-bold text-white truncate uppercase">{card.bank || 'N/A'}</p>
-                                                            </div>
-                                                            <div className="bg-white/5 p-2 rounded border border-white/5">
-                                                                <p className="text-[7px] text-gray-500 font-bold uppercase mb-1">Source IP</p>
-                                                                <p className="text-[9px] font-mono text-gray-400">{card.ip || '---.---.---'}</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Action Buttons Layer */}
-                                                    <div className="mt-auto p-4 flex gap-2 bg-black/50 border-t border-white/10 backdrop-blur-sm">
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingCard(card);
-                                                                setEditCardForm({ ...card });
-                                                            }}
-                                                            className="flex-1 py-2 bg-blue-600/10 hover:bg-blue-600 border border-blue-600/30 text-blue-400 hover:text-white transition-all text-[9px] font-black tracking-widest uppercase rounded cursor-pointer"
-                                                        >
-                                                            EDIT
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteCard(card.id || (card as unknown as { _id: string })._id)}
-                                                            className="flex-1 py-2 bg-red-600/10 hover:bg-red-600 border border-red-600/30 text-red-500 hover:text-white transition-all text-[9px] font-black tracking-widest uppercase rounded cursor-pointer"
-                                                        >
-                                                            PURGE
-                                                        </button>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            </div>
+
+                                                {/* BACK SIDE */}
+                                                <div className="absolute inset-0 backface-hidden transform-[rotateY(180deg)] z-20">
+                                                    <div className="h-full w-full rounded-2xl bg-[#0a0a0a] border-2 border-(--accent)/30 overflow-hidden relative flex flex-col shadow-2xl">
+                                                        {/* Magnetic Strip */}
+                                                        <div className="w-full h-10 bg-black mt-6"></div>
+
+                                                        <div className="p-6 space-y-4">
+                                                            <div className="flex justify-between items-center">
+                                                                <div className="bg-white/90 h-8 w-2/3 flex items-center justify-end px-3 rounded shadow-inner">
+                                                                    <span className="font-mono text-black font-black tracking-widest text-xs">{card.cvv || 'XXX'}</span>
+                                                                </div>
+                                                                <span className="text-[10px] font-black text-(--accent) tracking-widest">CVC_CORE</span>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 gap-2 mt-4">
+                                                                <div className="bg-white/5 p-2 rounded border border-white/5">
+                                                                    <p className="text-[7px] text-gray-500 font-bold uppercase mb-1">Bank</p>
+                                                                    <p className="text-[9px] font-bold text-white truncate uppercase">{card.bank || 'N/A'}</p>
+                                                                </div>
+                                                                <div className="bg-white/5 p-2 rounded border border-white/5">
+                                                                    <p className="text-[7px] text-gray-500 font-bold uppercase mb-1">Source IP</p>
+                                                                    <p className="text-[9px] font-mono text-gray-400">{card.ip || '---.---.---'}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Buttons Layer */}
+                                                        <div className="mt-auto p-4 flex gap-2 bg-black/50 border-t border-white/10 backdrop-blur-sm">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingCard(card);
+                                                                    setEditCardForm({ ...card });
+                                                                }}
+                                                                className="flex-1 py-2 bg-blue-600/10 hover:bg-blue-600 border border-blue-600/30 text-blue-400 hover:text-white transition-all text-[9px] font-black tracking-widest uppercase rounded cursor-pointer"
+                                                            >
+                                                                EDIT
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteCard(card.id || (card as unknown as { _id: string })._id);
+                                                                }}
+                                                                className="flex-1 py-2 bg-red-600/10 hover:bg-red-600 border border-red-600/30 text-red-500 hover:text-white transition-all text-[9px] font-black tracking-widest uppercase rounded cursor-pointer"
+                                                            >
+                                                                PURGE
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
                                         </motion.div>
-                                    </motion.div>
-                                ))}
+                                    ));
+                            })()}
                         </div>
+
+                        {/* Cards Pagination Controls */}
+                        {(() => {
+                            const filteredCount = cards.filter(c =>
+                                (c.title || '').toLowerCase().includes(cardsSearch) ||
+                                (c.country || '').toLowerCase().includes(cardsSearch) ||
+                                (c.cardNumber || '').toLowerCase().includes(cardsSearch) ||
+                                (c.bank || '').toLowerCase().includes(cardsSearch)
+                            ).length;
+
+                            if (filteredCount <= cardsPerPage) return null;
+
+                            return (
+                                <div className="mt-8 flex justify-center gap-2 pb-8">
+                                    <button
+                                        onClick={() => setCardsPage(p => Math.max(1, p - 1))}
+                                        disabled={cardsPage === 1}
+                                        className="px-6 py-2 bg-[#1a1a1a] text-gray-400 rounded-lg disabled:opacity-50 hover:bg-(--accent) hover:text-black transition-all text-xs font-black tracking-widest -skew-x-12"
+                                    >
+                                        <span className="block skew-x-12">PREV</span>
+                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {Array.from({ length: Math.ceil(filteredCount / cardsPerPage) }, (_, i) => i + 1)
+                                            .slice(Math.max(0, cardsPage - 3), Math.min(Math.ceil(filteredCount / cardsPerPage), cardsPage + 2))
+                                            .map(pageNum => (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCardsPage(pageNum)}
+                                                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-black transition-all -skew-x-12 ${cardsPage === pageNum
+                                                        ? 'bg-(--accent) text-black shadow-[0_0_15px_var(--accent)]'
+                                                        : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
+                                                        }`}
+                                                >
+                                                    <span className="block skew-x-12">{pageNum}</span>
+                                                </button>
+                                            ))}
+                                    </div>
+                                    <button
+                                        onClick={() => setCardsPage(p => Math.min(Math.ceil(filteredCount / cardsPerPage), p + 1))}
+                                        disabled={cardsPage === Math.ceil(filteredCount / cardsPerPage)}
+                                        className="px-6 py-2 bg-[#1a1a1a] text-gray-400 rounded-lg disabled:opacity-50 hover:bg-(--accent) hover:text-black transition-all text-xs font-black tracking-widest -skew-x-12"
+                                    >
+                                        <span className="block skew-x-12">NEXT</span>
+                                    </button>
+                                </div>
+                            );
+                        })()}
 
                         {cards.length === 0 && !showAddCard && (
                             <div className="p-12 border border-dashed border-(--border) rounded-lg text-center bg-(--bg-secondary)/50">
