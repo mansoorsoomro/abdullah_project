@@ -11,8 +11,27 @@ import {
     Trash2, Edit, Key, UserX,
     Activity, DollarSign,
     Users, CreditCard, ShoppingCart, AlertTriangle,
-    CheckCircle, Search, X
+    CheckCircle, Search, X, Server, Globe, Settings
 } from 'lucide-react';
+
+interface OfferFormState {
+    id?: string;
+    _id?: string;
+    title: string;
+    description: string;
+    country: string;
+    state?: string;
+    type: 'CARD' | 'PROXY';
+    cardCount: string | number;
+    proxyType?: string;
+    proxyFile?: string;
+    discount: string | number;
+    originalPrice: string | number;
+    price: string | number;
+    badge?: string;
+    isActive: boolean;
+    styleIndex: number;
+}
 
 export default function AdminDashboard() {
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -97,10 +116,15 @@ export default function AdminDashboard() {
 
     // Offers State
     const [showAddOffer, setShowAddOffer] = useState(false);
-    const [newOffer, setNewOffer] = useState({
+    const [newOffer, setNewOffer] = useState<OfferFormState>({
         title: '',
         description: '',
+        country: 'USA',
+        state: '',
+        type: 'CARD',
         cardCount: '',
+        proxyType: 'SOCKS5',
+        proxyFile: '',
         discount: '',
         originalPrice: '',
         price: '',
@@ -108,6 +132,27 @@ export default function AdminDashboard() {
         isActive: true,
         styleIndex: 0
     });
+    const [proxyUploading, setProxyUploading] = useState(false);
+    // Offer cards management
+    const [managingOffer, setManagingOffer] = useState<Offer | null>(null);
+    const [offerCards, setOfferCards] = useState<Record<string, unknown>[]>([]);
+    const [offerCardsLoading, setOfferCardsLoading] = useState(false);
+    const [newOfferCard, setNewOfferCard] = useState({
+        cardNumber: '', cvv: '', expiry: '', holder: '', address: '', bank: '',
+        type: '', zip: '', city: '', state: '', country: '', ssn: '', dob: '',
+        email: '', phone: '', userAgent: '', password: '', ip: '', videoLink: '', proxy: ''
+    });
+    const [addingOfferCard, setAddingOfferCard] = useState(false);
+    const [showAddCardForm, setShowAddCardForm] = useState(false);
+
+    const COUNTRIES = ['USA', 'UK', 'Germany', 'France', 'Canada', 'Australia', 'Italy', 'Spain', 'Netherlands', 'Sweden', 'Norway', 'Denmark', 'Switzerland', 'Belgium', 'Austria', 'Japan', 'Singapore', 'UAE', 'New Zealand'];
+    const COUNTRY_FLAGS: Record<string, string> = {
+        'USA': '🇺🇸', 'UK': '🇬🇧', 'Germany': '🇩🇪', 'France': '🇫🇷', 'Canada': '🇨🇦',
+        'Australia': '🇦🇺', 'Italy': '🇮🇹', 'Spain': '🇪🇸', 'Netherlands': '🇳🇱',
+        'Sweden': '🇸🇪', 'Norway': '🇳🇴', 'Denmark': '🇩🇰', 'Switzerland': '🇨🇭',
+        'Belgium': '🇧🇪', 'Austria': '🇦🇹', 'Japan': '🇯🇵', 'Singapore': '🇸🇬',
+        'UAE': '🇦🇪', 'New Zealand': '🇳🇿',
+    };
 
     const fetchSettings = async () => {
         try {
@@ -212,8 +257,11 @@ export default function AdminDashboard() {
     const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
     const [, setOfferSaving] = useState(false);
     const blankOffer = () => ({
-        title: '', description: '', cardCount: 10, discount: 10,
-        originalPrice: 0, price: 0, badge: '', isActive: true, styleIndex: 0,
+        title: '', description: '', country: 'USA', state: '',
+        type: 'CARD' as 'CARD' | 'PROXY', cardCount: 10,
+        proxyType: 'SOCKS5', proxyFile: '',
+        discount: 10, originalPrice: 0, price: 0,
+        badge: '', isActive: true, styleIndex: 0,
     });
     const [offerForm, setOfferForm] = useState<Record<string, unknown>>(blankOffer());
 
@@ -287,6 +335,29 @@ export default function AdminDashboard() {
         });
     };
 
+    const handleProxyUpload = async (e: React.ChangeEvent<HTMLInputElement>, forNew: boolean = true) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setProxyUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await fetch('/api/admin/proxy-upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                if (forNew) setNewOffer(prev => ({ ...prev, proxyFile: data.url }));
+                else setOfferForm(prev => ({ ...prev, proxyFile: data.url }));
+                showNotification('✓ Proxy file uploaded successfully', 'success');
+            } else {
+                showNotification(data.error || 'Upload failed', 'error');
+            }
+        } catch {
+            showNotification('Upload failed', 'error');
+        } finally {
+            setProxyUploading(false);
+        }
+    };
+
     const fetchUsers = async () => {
         try {
             console.log('Fetching users...');
@@ -319,25 +390,114 @@ export default function AdminDashboard() {
 
     const handleAddOffer = async (e: React.FormEvent) => {
         e.preventDefault();
+        const offerId = newOffer.id || newOffer._id;
+        const isEditing = !!offerId;
+
         try {
-            const response = await fetch('/api/admin/offers', {
-                method: 'POST',
+            const originalPrice = parseFloat(String(newOffer.originalPrice));
+            const price = parseFloat(String(newOffer.price));
+            const discount = parseFloat(String(newOffer.discount)) || 0;
+            const cardCountNum = parseInt(String(newOffer.cardCount)) || 0;
+
+            // Explicitly build the payload to ensure 'type' and other fields are correct
+            const payload = {
+                title: newOffer.title,
+                description: newOffer.description,
+                country: newOffer.country,
+                state: newOffer.state,
+                type: newOffer.type,
+                cardCount: cardCountNum,
+                proxyType: newOffer.proxyType,
+                proxyFile: newOffer.proxyFile,
+                discount,
+                originalPrice,
+                price,
+                badge: newOffer.badge,
+                isActive: newOffer.isActive,
+                styleIndex: newOffer.styleIndex
+            };
+
+            console.log('[FRONTEND] Submitting offer payload:', JSON.stringify(payload));
+
+            const response = await fetch(isEditing ? `/api/admin/offers/${offerId}` : '/api/admin/offers', {
+                method: isEditing ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newOffer),
+                body: JSON.stringify(payload),
             });
+            const data = await response.json();
             if (response.ok) {
-                showNotification('✓ Offer created successfully!', 'success');
+                showNotification(isEditing ? '✓ Offer updated!' : '✓ Offer created!', 'success');
                 setShowAddOffer(false);
-                setNewOffer({
-                    title: '', description: '', cardCount: '', discount: '',
-                    originalPrice: '', price: '', badge: '', isActive: true, styleIndex: 0
-                });
+                setNewOffer({ ...blankOffer(), id: undefined, _id: undefined, discount: '', originalPrice: '', price: '', cardCount: '' });
                 fetchAdminOffers();
+            } else {
+                showNotification(data.error || `Failed to ${isEditing ? 'update' : 'create'} offer`, 'error');
             }
-        } catch {
-            showNotification('Failed to create offer', 'error');
+        } catch (err: unknown) {
+            showNotification(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
         }
     };
+
+    // Fetch and manage offer-specific cards
+    const fetchOfferCards = async (offer: Offer) => {
+        setManagingOffer(offer);
+        setOfferCardsLoading(true);
+        setShowAddCardForm(false);
+        setNewOfferCard({ cardNumber: '', cvv: '', expiry: '', holder: '', address: '', bank: '', type: '', zip: '', city: '', state: '', country: '', ssn: '', dob: '', email: '', phone: '', userAgent: '', password: '', ip: '', videoLink: '', proxy: '' });
+        try {
+            const res = await fetch(`/api/admin/offers/${offer._id}/cards`);
+            const data = await res.json();
+            setOfferCards(data.cards || []);
+        } catch { showNotification('Failed to load offer cards', 'error'); }
+        finally { setOfferCardsLoading(false); }
+    };
+
+    const handleAddOfferCard = async () => {
+        if (!managingOffer || !newOfferCard.cardNumber) return;
+        setAddingOfferCard(true);
+        try {
+            const res = await fetch(`/api/admin/offers/${managingOffer._id}/cards`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newOfferCard),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showNotification('✓ Card added to offer!', 'success');
+                setNewOfferCard({ cardNumber: '', cvv: '', expiry: '', holder: '', address: '', bank: '', type: '', zip: '', city: '', state: '', country: '', ssn: '', dob: '', email: '', phone: '', userAgent: '', password: '', ip: '', videoLink: '', proxy: '' });
+                setShowAddCardForm(false);
+                // Refresh cards
+                const fresh = await fetch(`/api/admin/offers/${managingOffer._id}/cards`);
+                const freshData = await fresh.json();
+                setOfferCards(freshData.cards || []);
+                fetchAdminOffers(); // update card count on the grid
+            } else {
+                showNotification(data.error || 'Failed to add card', 'error');
+            }
+        } catch { showNotification('Connection error', 'error'); }
+        finally { setAddingOfferCard(false); }
+    };
+
+    const handleDeleteOfferCard = async (cardId: string) => {
+        if (!managingOffer) return;
+        showConfirm({
+            title: 'REMOVE CARD',
+            message: 'Remove this card from the offer? This cannot be undone.',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/admin/offers/${managingOffer._id}/cards?cardId=${cardId}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        showNotification('✓ Card removed', 'success');
+                        const fresh = await fetch(`/api/admin/offers/${managingOffer._id}/cards`);
+                        const freshData = await fresh.json();
+                        setOfferCards(freshData.cards || []);
+                        fetchAdminOffers();
+                    } else showNotification('Failed to remove card', 'error');
+                } catch { showNotification('Connection error', 'error'); }
+            },
+        });
+    };
+
 
     const handleApprove = async (trxId: string) => {
         setApproving(trxId);
@@ -1148,11 +1308,32 @@ export default function AdminDashboard() {
                                                 <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
                                                     <div>
                                                         <p className="text-[10px] text-(--accent) font-bold tracking-widest mb-2">AGENT_ID</p>
-                                                        <p className="text-lg font-black text-white group-hover:text-(--accent) transition-colors">{payment.username}</p>
+                                                        <p className="text-lg font-black text-white group-hover:text-(--accent) transition-colors">
+                                                            {payment.username !== 'N/A' ? payment.username : (
+                                                                <span className="text-gray-500 text-sm font-mono">
+                                                                    {payment.type === 'SIGNUP' ? 'Pending Signup' : 'Unknown'}
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                        <span className={`mt-1 inline-block text-[8px] font-black tracking-widest px-2 py-0.5 rounded ${payment.type === 'DEPOSIT'
+                                                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                                            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                                            }`}>
+                                                            {payment.type || 'SIGNUP'}
+                                                        </span>
                                                     </div>
                                                     <div>
                                                         <p className="text-[10px] text-gray-500 font-bold tracking-widest mb-2">EMAIL_ADDRESS</p>
-                                                        <p className="text-sm text-gray-300 font-mono">{payment.email}</p>
+                                                        <p className="text-sm text-gray-300 font-mono">
+                                                            {payment.email !== 'N/A' ? payment.email : (
+                                                                <span className="text-gray-600 italic text-xs">not registered yet</span>
+                                                            )}
+                                                        </p>
+                                                        {payment.amount > 0 && (
+                                                            <p className="text-[10px] text-green-400 font-black mt-1">
+                                                                ${payment.amount.toLocaleString()} USDT
+                                                            </p>
+                                                        )}
                                                     </div>
                                                     <div className="md:col-span-1">
                                                         <p className="text-[10px] text-gray-500 font-bold tracking-widest mb-2">TRX_HASH</p>
@@ -2225,87 +2406,410 @@ export default function AdminDashboard() {
                     </motion.div>
                 )}
 
-                {/* Bundle Offers Tab */}
+                {/* ─── Bundle Offers Tab ──────────────────────────────────────────────── */}
                 {activeTab === 'offers' && (
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                    >
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+
+                        {/* Header */}
                         <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
                             <h2 className="text-2xl font-black text-white tracking-widest">
-                                BUNDLE <span className="text-(--accent)">OFFERS</span>
+                                COUNTRY <span className="text-(--accent)">OFFERS</span>
+                                <span className="ml-3 text-sm text-gray-500 font-mono">(separate cards — not from marketplace)</span>
                             </h2>
                             <button
-                                onClick={() => setShowAddOffer(!showAddOffer)}
+                                onClick={() => {
+                                    if (!showAddOffer) setNewOffer({ ...blankOffer(), id: undefined, _id: undefined, discount: '', originalPrice: '', price: '', cardCount: '' });
+                                    setShowAddOffer(!showAddOffer);
+                                }}
                                 className="px-6 py-2 bg-(--accent) text-black text-xs font-black tracking-widest uppercase hover:bg-white transition-colors -skew-x-12"
                             >
                                 <span className="block skew-x-12">{showAddOffer ? 'CANCEL' : '+ CREATE OFFER'}</span>
                             </button>
                         </div>
 
+                        {/* Create Offer Form */}
                         {showAddOffer && (
                             <motion.form
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
+                                initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
                                 onSubmit={handleAddOffer}
                                 className="bg-[#050505] border border-(--accent)/30 p-8 rounded-xl mb-12 grid grid-cols-1 md:grid-cols-3 gap-6"
                             >
                                 <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase">Offer Type</label>
+                                    <select value={newOffer.type}
+                                        onChange={e => setNewOffer({ ...newOffer, type: e.target.value as 'CARD' | 'PROXY' })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none">
+                                        <option value="CARD">CARD BUNDLE</option>
+                                        <option value="PROXY">PROXY PACKAGE</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-500 uppercase">Offer Title</label>
-                                    <input type="text" value={newOffer.title} onChange={e => setNewOffer({ ...newOffer, title: e.target.value })} className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="e.g. Starter Pack" required />
+                                    <input type="text" value={newOffer.title}
+                                        onChange={e => setNewOffer({ ...newOffer, title: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder={newOffer.type === 'CARD' ? "e.g. USA Premium Pack" : "e.g. high-speed SOCKS5 Proxies"} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase">Card Count</label>
-                                    <input type="number" value={newOffer.cardCount} onChange={e => setNewOffer({ ...newOffer, cardCount: e.target.value })} className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="50" required />
+                                    <label className="text-[10px] font-black text-gray-500 uppercase">Country</label>
+                                    <select value={newOffer.country}
+                                        onChange={e => setNewOffer({ ...newOffer, country: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none">
+                                        {COUNTRIES.map(c => (
+                                            <option key={c} value={c}>{COUNTRY_FLAGS[c] || ''} {c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {newOffer.type === 'PROXY' && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase">State (Optional)</label>
+                                            <input type="text" value={newOffer.state}
+                                                onChange={e => setNewOffer({ ...newOffer, state: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="e.g. California" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase">Proxy Type</label>
+                                            <select value={newOffer.proxyType}
+                                                onChange={e => setNewOffer({ ...newOffer, proxyType: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none">
+                                                <option value="SOCKS5">SOCKS5</option>
+                                                <option value="SOCKS4">SOCKS4</option>
+                                                <option value="HTTP">HTTP</option>
+                                                <option value="HTTPS">HTTPS</option>
+                                                <option value="RESIDENTIAL">RESIDENTIAL</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase">Upload Proxy PDF</label>
+                                            <div className="relative group">
+                                                <input
+                                                    type="file"
+                                                    accept="application/pdf"
+                                                    onChange={(e) => handleProxyUpload(e, true)}
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                />
+                                                <div className={`w-full border-2 border-dashed ${newOffer.proxyFile ? 'border-green-500' : 'border-gray-800'} p-3 rounded text-center transition-colors group-hover:border-(--accent)`}>
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                        {proxyUploading ? 'UPLOADING...' : newOffer.proxyFile ? '✓ PDF READY' : 'CLICK TO UPLOAD PDF'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase">Proxy Count</label>
+                                            <input type="number" value={newOffer.cardCount}
+                                                onChange={e => setNewOffer({ ...newOffer, cardCount: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="e.g. 50" required />
+                                        </div>
+                                    </>
+                                )}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase">Description</label>
+                                    <input type="text" value={newOffer.description}
+                                        onChange={e => setNewOffer({ ...newOffer, description: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="Features of this offer..." />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase">Original Price</label>
-                                    <input type="number" value={newOffer.originalPrice} onChange={e => setNewOffer({ ...newOffer, originalPrice: e.target.value })} className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="500" required />
+                                    <label className="text-[10px] font-black text-gray-500 uppercase">Original Price ($)</label>
+                                    <input type="number" value={newOffer.originalPrice}
+                                        onChange={e => setNewOffer({ ...newOffer, originalPrice: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="5000" required />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase">Bundle Price</label>
-                                    <input type="number" value={newOffer.price} onChange={e => setNewOffer({ ...newOffer, price: e.target.value })} className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="399" required />
+                                    <label className="text-[10px] font-black text-gray-500 uppercase">Bundle Price ($)</label>
+                                    <input type="number" value={newOffer.price}
+                                        onChange={e => setNewOffer({ ...newOffer, price: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="3999" required />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-500 uppercase">Discount (%)</label>
-                                    <input type="number" value={newOffer.discount} onChange={e => setNewOffer({ ...newOffer, discount: e.target.value })} className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="20" required />
+                                    <input type="number" value={newOffer.discount}
+                                        onChange={e => setNewOffer({ ...newOffer, discount: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="20" required />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-500 uppercase">Badge (Optional)</label>
-                                    <input type="text" value={newOffer.badge} onChange={e => setNewOffer({ ...newOffer, badge: e.target.value })} className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="BEST VALUE" />
+                                    <input type="text" value={newOffer.badge}
+                                        onChange={e => setNewOffer({ ...newOffer, badge: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 p-3 text-white rounded text-sm focus:border-(--accent) outline-none" placeholder="BEST VALUE" />
+                                </div>
+                                <div className="md:col-span-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded text-[10px] text-yellow-400 font-mono">
+                                    DEBUG: Current type = <strong>{newOffer.type}</strong>
                                 </div>
                                 <button type="submit" className="md:col-span-3 py-4 bg-white text-black font-black tracking-[0.2em] uppercase rounded hover:bg-(--accent) hover:text-white transition-all">
-                                    PUBLISH OFFER TO MARKET
+                                    PUBLISH {newOffer.type === 'CARD' ? 'BUNDLE' : 'PROXY OFFER'}
                                 </button>
                             </motion.form>
                         )}
 
+                        {/* Offers Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {adminOffers.map((offer) => (
-                                <div key={offer.id} className="bg-[#0a0a0a] border border-gray-800 p-6 rounded-xl relative group">
-                                    {offer.badge && (
-                                        <div className="absolute top-4 right-4 bg-(--accent) text-black px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded">
-                                            {offer.badge}
+                            {adminOffers.map((offer) => {
+                                const isProxy = (offer.type || 'CARD') === 'PROXY';
+                                return (
+                                    <div key={offer.id} className={`bg-[#0a0a0a] border ${isProxy ? 'border-blue-500/30 hover:border-blue-400' : 'border-gray-800 hover:border-gray-600'} p-6 rounded-xl relative group transition-all duration-300 overflow-hidden`}>
+                                        {/* Background Icon for Proxiess */}
+                                        {isProxy && (
+                                            <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                                <Server className="w-32 h-32 text-blue-500" />
+                                            </div>
+                                        )}
+
+                                        {/* Country badge */}
+                                        <div className="flex items-center gap-2 mb-3 relative z-10">
+                                            <span className="text-xl">{COUNTRY_FLAGS[offer.country] || '🌍'}</span>
+                                            <span className="text-xs font-black text-gray-400 tracking-widest">{offer.country || 'USA'}</span>
+                                            {!offer.isActive && (
+                                                <span className="ml-auto text-[8px] font-black text-red-500 border border-red-500/30 px-2 py-0.5 rounded tracking-widest">INACTIVE</span>
+                                            )}
                                         </div>
-                                    )}
-                                    <h3 className="text-white font-black tracking-widest mb-2 uppercase">{offer.title}</h3>
-                                    <div className="flex items-end gap-3 mb-4">
-                                        <span className="text-3xl font-black text-white">{offer.price} USDT</span>
-                                        <span className="text-gray-600 line-through text-sm mb-1">{offer.originalPrice} USDT</span>
+
+                                        {offer.badge && (
+                                            <div className="absolute top-4 right-4 bg-yellow-500 text-black px-2 py-0.5 text-[8px] font-black uppercase tracking-tighter rounded z-10">{offer.badge}</div>
+                                        )}
+
+                                        <h3 className="text-white font-black tracking-widest mb-1 uppercase text-sm flex items-center gap-2 relative z-10">
+                                            {isProxy ? <Globe className="w-4 h-4 text-blue-400 shrink-0" /> : <CreditCard className="w-4 h-4 text-gray-400 shrink-0" />}
+                                            {offer.title}
+                                            {isProxy && <span className="text-[7px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30">PROXY</span>}
+                                        </h3>
+
+                                        <p className="text-gray-600 text-xs font-mono mb-4 uppercase tracking-tighter relative z-10">
+                                            {isProxy
+                                                ? `${offer.proxyType || 'SOCKS5'} · ${offer.state || 'GLOBAL'} · HIGH-SPEED`
+                                                : offer.description
+                                            }
+                                        </p>
+
+                                        <div className="flex items-end gap-3 mb-4 relative z-10">
+                                            <span className={`text-2xl font-black ${isProxy ? 'text-blue-400' : 'text-white'}`}>${offer.price.toLocaleString()} USDT</span>
+                                            <span className="text-gray-600 line-through text-xs mb-1">${offer.originalPrice.toLocaleString()}</span>
+                                        </div>
+
+                                        <div className="flex justify-between text-[10px] font-bold text-gray-400 tracking-wider mb-2 uppercase relative z-10">
+                                            <span className={`font-black ${isProxy ? 'text-blue-500' : (offer.cardCount >= 6 ? 'text-green-400' : offer.cardCount > 0 ? 'text-yellow-400' : 'text-red-400')}`}>
+                                                {isProxy ? `SERVERS: ${offer.cardCount}` : `CARDS: ${offer.cardCount}/8`}
+                                            </span>
+                                            <span className="text-green-500">-{offer.discount}% OFF</span>
+                                        </div>
+
+                                        {/* visual indicator */}
+                                        <div className="flex gap-1 mb-6 relative z-10">
+                                            {isProxy ? (
+                                                <div className="w-full h-1 bg-blue-500/20 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: '100%' }}
+                                                        transition={{ duration: 2, repeat: Infinity }}
+                                                        className="h-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)]"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                Array.from({ length: 8 }).map((_, i) => (
+                                                    <div key={i} className={`flex-1 h-1 rounded-full ${i < (offer.cardCount || 0) ? 'bg-green-500' : 'bg-gray-800'}`} />
+                                                ))
+                                            )}
+                                        </div>
+
+                                        <div className="flex gap-2 relative z-10">
+                                            {!isProxy ? (
+                                                <button
+                                                    onClick={() => fetchOfferCards(offer)}
+                                                    className="flex-1 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Settings className="w-3 h-3" />
+                                                    MANAGE CARDS
+                                                </button>
+                                            ) : (
+                                                <a
+                                                    href={offer.proxyFile}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                                                >
+                                                    <Server className="w-3 h-3" />
+                                                    VIEW PDF
+                                                </a>
+                                            )}
+
+                                            <button
+                                                onClick={() => {
+                                                    setNewOffer({ ...offer, cardCount: String(offer.cardCount), discount: String(offer.discount), originalPrice: String(offer.originalPrice), price: String(offer.price) });
+                                                    setShowAddOffer(true);
+                                                    // This will scroll up to the form
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                                className="py-2.5 px-3 bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase rounded hover:bg-white hover:text-black transition-all"
+                                                title="Edit Offer"
+                                            >
+                                                <Edit className="w-3.5 h-3.5" />
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleDeleteOffer(offer.id)}
+                                                className="py-2.5 px-3 bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-black uppercase rounded hover:bg-red-500 hover:text-white transition-all"
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between text-[10px] font-bold text-gray-500 tracking-wider mb-6">
-                                        <span>CARDS: {offer.cardCount}</span>
-                                        <span className="text-green-500">-{offer.discount}% OFF</span>
-                                    </div>
-                                    <button
-                                        onClick={() => handleDeleteOffer(offer.id)}
-                                        className="w-full py-2 bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-widest rounded hover:bg-red-500 hover:text-white transition-colors"
-                                    >
-                                        DELETE OFFER
-                                    </button>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
+
+                        {adminOffers.length === 0 && (
+                            <div className="p-20 text-center text-gray-600 font-mono text-xs tracking-widest border border-dashed border-gray-800 rounded-xl">
+                                NO OFFERS CREATED YET
+                            </div>
+                        )}
+
+                        {/* ── Manage Offer Cards Modal ── */}
+                        <AnimatePresence>
+                            {managingOffer && (
+                                <motion.div
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                    className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+                                    onClick={() => { setManagingOffer(null); setShowAddCardForm(false); }}
+                                >
+                                    <motion.div
+                                        initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }}
+                                        exit={{ scale: 0.9, y: 30 }}
+                                        onClick={e => e.stopPropagation()}
+                                        className="bg-[#070707] border border-[--accent]/30 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+                                    >
+                                        {/* Modal Header */}
+                                        <div className="flex items-center justify-between p-6 border-b border-white/5">
+                                            <div>
+                                                <h3 className="text-xl font-black text-white">
+                                                    {COUNTRY_FLAGS[managingOffer.country] || '🌍'} {managingOffer.title}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 font-mono">
+                                                    {offerCards.length}/8 cards · {managingOffer.country} · ${managingOffer.price.toLocaleString()} USDT
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {offerCards.length < 8 && (
+                                                    <button
+                                                        onClick={() => setShowAddCardForm(v => !v)}
+                                                        className="px-4 py-2 bg-(--accent) text-black text-[10px] font-black tracking-widest uppercase rounded hover:bg-white transition-colors"
+                                                    >
+                                                        {showAddCardForm ? 'CANCEL' : '+ ADD CARD'}
+                                                    </button>
+                                                )}
+                                                {offerCards.length >= 8 && (
+                                                    <span className="text-xs text-yellow-400 font-mono border border-yellow-400/30 px-3 py-1.5 rounded">MAX 8 CARDS</span>
+                                                )}
+                                                <button onClick={() => { setManagingOffer(null); setShowAddCardForm(false); }} className="p-2 text-gray-500 hover:text-white">
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+
+                                            {/* Add Card Form */}
+                                            {showAddCardForm && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                                                    className="bg-[#0f0f0f] border border-(--accent)/30 rounded-xl p-6 mb-4"
+                                                >
+                                                    <h4 className="text-sm font-black text-white tracking-widest mb-4 uppercase">Add Card to Offer</h4>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        {[
+                                                            { key: 'cardNumber', label: 'Card Number', required: true },
+                                                            { key: 'cvv', label: 'CVV' },
+                                                            { key: 'expiry', label: 'Expiry' },
+                                                            { key: 'holder', label: 'Holder Name' },
+                                                            { key: 'bank', label: 'Bank' },
+                                                            { key: 'type', label: 'Card Type' },
+                                                            { key: 'address', label: 'Address' },
+                                                            { key: 'city', label: 'City' },
+                                                            { key: 'state', label: 'State' },
+                                                            { key: 'zip', label: 'ZIP' },
+                                                            { key: 'country', label: 'Card Country' },
+                                                            { key: 'ssn', label: 'SSN' },
+                                                            { key: 'dob', label: 'DOB' },
+                                                            { key: 'email', label: 'Email' },
+                                                            { key: 'phone', label: 'Phone' },
+                                                            { key: 'ip', label: 'IP' },
+                                                            { key: 'password', label: 'Password' },
+                                                            { key: 'userAgent', label: 'User Agent' },
+                                                            { key: 'videoLink', label: 'Video Link' },
+                                                            { key: 'proxy', label: 'Proxy' },
+                                                        ].map(f => (
+                                                            <div key={f.key} className="space-y-1">
+                                                                <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                                                                    {f.label}{f.required && <span className="text-red-500">*</span>}
+                                                                </label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={newOfferCard[f.key as keyof typeof newOfferCard]}
+                                                                    onChange={e => setNewOfferCard(prev => ({ ...prev, [f.key]: e.target.value }))}
+                                                                    className="w-full bg-black border border-gray-800 p-2 text-white rounded text-xs focus:border-(--accent) outline-none font-mono"
+                                                                    placeholder={f.label}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <button
+                                                        onClick={handleAddOfferCard}
+                                                        disabled={addingOfferCard || !newOfferCard.cardNumber}
+                                                        className="mt-4 w-full py-3 bg-white text-black font-black text-xs tracking-widest uppercase rounded hover:bg-(--accent) hover:text-white transition-all disabled:opacity-40"
+                                                    >
+                                                        {addingOfferCard ? 'ADDING...' : `ADD CARD (${offerCards.length}/8)`}
+                                                    </button>
+                                                </motion.div>
+                                            )}
+
+                                            {/* Cards List */}
+                                            {offerCardsLoading ? (
+                                                <div className="flex items-center justify-center py-12">
+                                                    <div className="w-6 h-6 border-2 border-[--accent] border-t-transparent rounded-full animate-spin" />
+                                                </div>
+                                            ) : offerCards.length === 0 ? (
+                                                <div className="py-16 text-center text-gray-600 font-mono text-xs tracking-widest">
+                                                    NO CARDS ADDED TO THIS OFFER YET
+                                                </div>
+                                            ) : (
+                                                offerCards.map((card, idx) => (
+                                                    <div key={String(card._id)} className="bg-[#0f0f0f] border border-white/5 rounded-xl p-4 hover:border-white/10 transition-colors">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="w-6 h-6 bg-(--accent)/10 border border-(--accent)/20 rounded text-[--accent] text-xs font-black flex items-center justify-center">{idx + 1}</span>
+                                                                <span className="text-sm font-black text-white font-mono">{String(card.cardNumber || '').replace(/(.{4})/g, '$1 ').trim()}</span>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleDeleteOfferCard(String(card._id))}
+                                                                className="text-red-500/60 hover:text-red-500 text-[10px] font-black tracking-widest uppercase px-2 py-1 rounded border border-red-500/20 hover:border-red-500/50 transition-colors"
+                                                            >
+                                                                REMOVE
+                                                            </button>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 text-[9px]">
+                                                            {[
+                                                                { l: 'CVV', v: card.cvv },
+                                                                { l: 'EXP', v: card.expiry },
+                                                                { l: 'HOLDER', v: card.holder },
+                                                                { l: 'BANK', v: card.bank },
+                                                                { l: 'TYPE', v: card.type },
+                                                                { l: 'COUNTRY', v: card.country },
+                                                            ].filter(x => x.v).map(x => (
+                                                                <div key={x.l} className="bg-black/40 rounded p-1.5">
+                                                                    <p className="text-gray-600 font-black tracking-widest">{x.l}</p>
+                                                                    <p className="text-white font-mono truncate">{String(x.v)}</p>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                     </motion.div>
                 )}
 

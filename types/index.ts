@@ -114,7 +114,12 @@ export interface Offer {
     id: string;
     title: string;
     description: string;
+    country: string;
+    state?: string;
+    type: 'CARD' | 'PROXY';
     cardCount: number;
+    proxyType?: string;
+    proxyFile?: string;
     discount: number;
     originalPrice: number;
     price: number;
@@ -124,4 +129,73 @@ export interface Offer {
     styleIndex: number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+}
+
+export interface OfferCard {
+    _id: string;
+    offerId: string;
+    cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+}
+
+export interface OfferOrderCard {
+    cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+}
+
+export interface OfferOrder {
+    _id: string;
+    id: string;
+    userId: string;
+    username: string;
+    offerId: string;
+    offerTitle: string;
+    offerCountry: string;
+    offerState?: string;
+    offerType: 'CARD' | 'PROXY';
+    cardCount: number;
+    proxyType?: string;
+    proxyFile?: string;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    cards: OfferOrderCard[];
+    purchaseDate: Date | string;
+    createdAt: Date | string;
 }

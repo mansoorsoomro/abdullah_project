@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Order, User, BundleOrder } from '../../../types';
-import { Package, CheckCircle, Percent } from 'lucide-react';
+import type { Order, User, BundleOrder, OfferOrder } from '../../../types';
+import { Package, CheckCircle, Percent, Gift, Server, Database } from 'lucide-react';
 
 interface Payment {
     _id: string;
@@ -19,6 +19,7 @@ export default function Orders() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [payments, setPayments] = useState<Payment[]>([]);
     const [bundleOrders, setBundleOrders] = useState<BundleOrder[]>([]);
+    const [offerOrders, setOfferOrders] = useState<OfferOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
 
@@ -52,6 +53,12 @@ export default function Orders() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => { if (user) fetchBundleOrders(user.id, bundlesPage); }, [bundlesPage]);
 
+    useEffect(() => {
+        if (user) {
+            fetchOfferOrders(user.id);
+        }
+    }, [user]);
+
     const fetchOrders = async (userId: string, page: number) => {
         try {
             const res = await fetch(`/api/orders/${userId}?page=${page}&limit=${itemsPerPage}`);
@@ -79,6 +86,16 @@ export default function Orders() {
             const data = await res.json();
             setBundleOrders(data.bundleOrders || []);
             if (data.pagination) setTotalBundlesPages(data.pagination.pages);
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchOfferOrders = async (userId: string) => {
+        try {
+            // Offer orders are usually fewer, fetching all or first page is often fine
+            const res = await fetch(`/api/offer-orders/${userId}?page=1&limit=50`);
+            const data = await res.json();
+            // Support both 'offerOrders' and 'orders' key from API
+            setOfferOrders(data.offerOrders || data.orders || []);
         } catch (e) { console.error(e); }
     };
 
@@ -128,16 +145,16 @@ export default function Orders() {
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
                         <span className="text-xs text-gray-500 font-bold block">TOTAL SPENT</span>
                         <span className="text-(--accent) font-black text-lg">
-                            ${(orders.reduce((s, o) => s + o.price, 0) + bundleOrders.reduce((s, b) => s + b.price, 0)).toLocaleString()}
+                            ${(orders.reduce((s, o) => s + o.price, 0) + bundleOrders.reduce((s, b) => s + b.price, 0) + offerOrders.reduce((s, o) => s + o.price, 0)).toLocaleString()}
                         </span>
                     </div>
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
                         <span className="text-xs text-gray-500 font-bold block">TOTAL ORDERS (THIS PAGE)</span>
-                        <span className="text-white font-black text-lg">{orders.length + bundleOrders.length}</span>
+                        <span className="text-white font-black text-lg">{orders.length + bundleOrders.length + offerOrders.length}</span>
                     </div>
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
                         <span className="text-xs text-gray-500 font-bold block">CARDS PURCHASED</span>
-                        <span className="text-white font-black text-lg">{totalPurchases}</span>
+                        <span className="text-white font-black text-lg">{totalPurchases + offerOrders.reduce((s, o) => s + o.cardCount, 0)}</span>
                     </div>
                 </div>
             </motion.div>
@@ -147,7 +164,9 @@ export default function Orders() {
                 {(['purchases', 'bundles', 'deposits'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-6 py-3 text-sm font-bold tracking-wide transition-all relative ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}>
-                        {tab === 'purchases' ? `PURCHASES (${totalPurchases})` : tab === 'bundles' ? 'BUNDLES' : 'DEPOSITS'}
+                        {tab === 'purchases' ? `PURCHASES (${totalPurchases})`
+                            : tab === 'bundles' ? `BUNDLES (${bundleOrders.length + offerOrders.length})`
+                                : 'DEPOSITS'}
                         {activeTab === tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-(--accent)" />}
                     </button>
                 ))}
@@ -209,7 +228,8 @@ export default function Orders() {
                                         </div>
 
                                         <div className="mt-8 pt-4 border-t border-white/5 space-y-4">
-                                            <div className="flex justify-end items-center text-[10px] font-bold">
+                                            <div className="flex justify-between items-center text-[10px] font-bold">
+                                                <span className="text-gray-600 font-mono uppercase">Date: {new Date(order.purchaseDate).toLocaleDateString()}</span>
                                                 <span className="text-green-500 uppercase tracking-widest flex items-center gap-1">
                                                     <CheckCircle size={10} /> ASSET_SECURED
                                                 </span>
@@ -235,21 +255,15 @@ export default function Orders() {
                 {/* ── BUNDLES TAB ── */}
                 {activeTab === 'bundles' && (
                     <motion.div key="bundles" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-8">
-                        {bundleOrders.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 border border-dashed border-gray-800 rounded-xl bg-black/50">
-                                <Package className="w-16 h-16 text-gray-700 mb-4" />
-                                <p className="text-gray-500 font-mono text-sm tracking-widest">NO BUNDLE PURCHASES YET</p>
-                                <p className="text-gray-700 text-xs font-mono mt-2">Visit the Offers page to purchase a bundle</p>
-                            </div>
-                        ) : (
+
+                        {/* Legacy bundle orders (from old bundle system) */}
+                        {bundleOrders.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {bundleOrders.map((bo, index) => (
                                     <motion.div key={bo._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}
                                         className="group bg-[#0a0a0a] border border-gray-800 hover:border-(--accent) transition-all duration-300 rounded-xl overflow-hidden shadow-lg relative">
                                         <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none"></div>
-                                        {/* Top accent bar */}
                                         <div className="h-1 w-full bg-linear-to-r from-(--accent) to-purple-600 shadow-[0_0_10px_rgba(255,0,51,0.5)]"></div>
-
                                         <div className="p-6 relative z-10">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="p-2.5 bg-(--accent)/10 border border-(--accent)/20 rounded-lg">
@@ -260,12 +274,10 @@ export default function Orders() {
                                                     {bo.discount}% OFF
                                                 </div>
                                             </div>
-
                                             <h3 className="text-lg font-black text-white italic tracking-wide mb-1 group-hover:text-(--accent) transition-colors">
                                                 {bo.bundleTitle}
                                             </h3>
                                             <p className="text-xs text-gray-500 font-mono mb-4">{bo.cardCount} CARDS BUNDLE</p>
-
                                             <div className="space-y-2 border-t border-gray-900 pt-4">
                                                 <div className="flex justify-between text-xs">
                                                     <span className="text-gray-600 font-mono">Original Price</span>
@@ -280,14 +292,12 @@ export default function Orders() {
                                                     <span className="text-green-400 font-bold font-mono">${(bo.originalPrice - bo.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                                                 </div>
                                                 <div className="flex justify-between text-xs pt-2 border-t border-gray-900">
-                                                    <span className="text-gray-600 font-mono">Status</span>
-                                                    <span className="text-green-400 font-bold font-mono">ACTIVATED</span>
+                                                    <span className="text-gray-600 font-mono">Purchased</span>
+                                                    <span className="text-gray-400 font-mono">{formatDate(bo.purchaseDate)}</span>
                                                 </div>
                                             </div>
-
                                             <div className="mt-4 flex items-center gap-2 p-2 bg-green-900/5 border border-green-800/20 rounded text-[10px] text-green-500 font-bold">
                                                 <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-
                                                 BUNDLE ACTIVATED
                                             </div>
                                         </div>
@@ -296,8 +306,89 @@ export default function Orders() {
                             </div>
                         )}
                         {renderPagination(bundlesPage, totalBundlesPages, setBundlesPage)}
+
+                        {/* Offer orders — purchased from Offers page */}
+                        {offerOrders.length > 0 && (
+                            <div className="flex flex-col gap-4">
+                                {bundleOrders.length > 0 && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-px flex-1 bg-gray-800" />
+                                        <span className="text-[10px] font-bold text-gray-600 tracking-widest uppercase font-mono">Offer Purchases</span>
+                                        <div className="h-px flex-1 bg-gray-800" />
+                                    </div>
+                                )}
+                                {offerOrders.map((oo, ooIdx) => (
+                                    <motion.div key={oo._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: ooIdx * 0.06 }}
+                                        className={`bg-[#0a0a0a] border ${oo.offerType === 'PROXY' ? 'border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.1)]' : 'border-gray-800'} rounded-2xl overflow-hidden shadow-lg relative`}>
+                                        <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+                                        <div className={`h-1.5 w-full ${oo.offerType === 'PROXY' ? 'bg-blue-600' : 'bg-linear-to-r from-(--accent) to-yellow-500'} shadow-[0_0_10px_rgba(255,0,51,0.4)]`} />
+
+                                        <div className="p-6 relative z-10">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className={`p-2.5 ${oo.offerType === 'PROXY' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-(--accent)/10 border-(--accent)/20'} border rounded-xl`}>
+                                                    {oo.offerType === 'PROXY' ? <Server className="w-5 h-5 text-blue-400" /> : <Gift className="w-5 h-5 text-(--accent)" />}
+                                                </div>
+                                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-900/10 border border-green-800/30 rounded text-[10px] font-black text-green-400">
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    PURCHASED
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <h3 className="text-xl font-black text-white italic tracking-wide mb-1">
+                                                    {oo.offerTitle}
+                                                </h3>
+                                                <p className="text-xs text-gray-400 font-mono mb-4 uppercase tracking-widest">
+                                                    {oo.offerType === 'PROXY' ? `${oo.cardCount} PROXIES` : `${oo.cardCount} CARDS BUNDLE`} · {new Date(oo.createdAt || oo.purchaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-4 flex flex-col gap-3 border-t border-gray-900 pt-4">
+                                                <div className="flex justify-between text-xs items-center">
+                                                    <span className="text-gray-500 font-bold uppercase tracking-wider">Amount Paid</span>
+                                                    <span className="text-white font-black text-lg">${oo.price.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-gray-500 font-mono text-xs">USDT</span></span>
+                                                </div>
+
+                                                {oo.offerType === 'PROXY' && oo.proxyFile ? (
+                                                    <a
+                                                        href={oo.proxyFile}
+                                                        download
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full py-3 bg-blue-600/20 border border-blue-500/50 text-blue-400 font-black text-[10px] tracking-[0.2em] uppercase rounded-lg hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                                                    >
+                                                        <Database className="w-3.5 h-3.5" />
+                                                        DOWNLOAD PROXY PDF
+                                                    </a>
+                                                ) : oo.offerType === 'CARD' ? (
+                                                    <div className="p-3 bg-white/5 border border-white/10 rounded-lg text-center">
+                                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">View in History for Details</p>
+                                                    </div>
+                                                ) : null}
+
+                                                <div className="flex items-center gap-2 p-2 bg-green-900/5 border border-green-800/20 rounded text-[10px] text-green-500 font-bold uppercase tracking-widest">
+                                                    <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                                                    Assets Secured
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Empty state — nothing at all */}
+                        {bundleOrders.length === 0 && offerOrders.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-20 border border-dashed border-gray-800 rounded-xl bg-black/50">
+                                <Package className="w-16 h-16 text-gray-700 mb-4" />
+                                <p className="text-gray-500 font-mono text-sm tracking-widest">NO BUNDLE PURCHASES YET</p>
+                                <p className="text-gray-700 text-xs font-mono mt-2">Visit the Offers page to purchase a bundle</p>
+                            </div>
+                        )}
+
                     </motion.div>
                 )}
+
 
                 {/* ── DEPOSITS TAB ── */}
                 {activeTab === 'deposits' && (
@@ -349,6 +440,6 @@ export default function Orders() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

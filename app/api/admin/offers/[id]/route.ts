@@ -8,9 +8,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         await connectDB();
         const { id } = await params;
         const body = await req.json();
-        const { title, description, cardCount, discount, originalPrice, price, badge, isActive, styleIndex } = body;
+        const { title, description, country, state, type, cardCount, proxyType, proxyFile, discount, originalPrice, price, badge, isActive, styleIndex } = body;
 
-        const avgPricePerCard = price && cardCount
+        const avgPricePerCard = price && cardCount && type === 'CARD'
             ? parseFloat((Number(price) / Number(cardCount)).toFixed(2))
             : undefined;
 
@@ -19,7 +19,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
             {
                 ...(title !== undefined && { title }),
                 ...(description !== undefined && { description }),
+                ...(country !== undefined && { country }),
+                ...(state !== undefined && { state }),
+                ...(type !== undefined && { type: type === 'PROXY' ? 'PROXY' : 'CARD' }),
                 ...(cardCount !== undefined && { cardCount: Number(cardCount) }),
+                ...(proxyType !== undefined && { proxyType }),
+                ...(proxyFile !== undefined && { proxyFile }),
                 ...(discount !== undefined && { discount: Number(discount) }),
                 ...(originalPrice !== undefined && { originalPrice: Number(originalPrice) }),
                 ...(price !== undefined && { price: Number(price) }),

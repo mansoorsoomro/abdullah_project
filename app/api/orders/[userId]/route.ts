@@ -3,7 +3,7 @@ import { connectDB } from '../../../../lib/db';
 import { Order as OrderModel } from '../../../../lib/models';
 import { decrypt } from '../../../../lib/encryption';
 
-// ── Pakistani / South-Asian name tokens (shared logic with cards API) ──────
+// ── Pakistani / South-Asian name tokens ───────────────────────────────────
 const PAKISTANI_NAME_TOKENS = [
     'muhammad', 'mohammed', 'mohammad', 'muhamad', 'muhammed',
     'ali', 'hassan', 'hussain', 'husain', 'hasan',
@@ -29,7 +29,6 @@ const PAKISTANI_NAME_TOKENS = [
     'waheed', 'waseem', 'waqar', 'waqas',
     'yasir', 'yousaf', 'yousuf', 'younas', 'zafar', 'zahid',
     'zain', 'zubair', 'zia',
-    // Female names
     'aisha', 'ayesha', 'amina', 'amna', 'asma',
     'bushra', 'fatima', 'fiza', 'fozia',
     'hina', 'huma', 'humaira',
@@ -40,13 +39,11 @@ const PAKISTANI_NAME_TOKENS = [
     'saima', 'samina', 'sana', 'shazia', 'sidra', 'sobia', 'sumaira', 'sundas',
     'tabassum', 'tahira', 'uzma',
     'yasmeen', 'yasmin', 'zainab', 'zubaida',
-    // Last names / family names
     'khan', 'malik', 'sheikh', 'chaudhry', 'chaudhary', 'choudhry',
     'qureshi', 'ansari', 'siddiqui', 'hashmi', 'bukhari',
     'mirza', 'baig', 'abbasi', 'rajput', 'bhatti', 'butt', 'rana',
     'niazi', 'afridi', 'durrani', 'gilani', 'bhutto',
     'nawaz', 'satti', 'gondal', 'gujjar', 'lodhi',
-    // Extra names visible in screenshots
     'ghulam', 'ullah', 'abdullah', 'dev',
 ];
 
@@ -72,26 +69,21 @@ export async function GET(
 
         await connectDB();
 
-        // Fetch a larger batch to compensate for post-decrypt filtering
-        const fetchLimit = limit * 6;
-        const skip = (page - 1) * fetchLimit;
+        // ── Fetch ALL orders for this user (no DB-level pagination) ────────
+        // We need to filter by holder name after decryption, so we
+        // paginate in memory — same pattern as cards API.
+        const allOrders = await OrderModel.find({ userId })
+            .sort({ purchaseDate: -1 })
+            .lean();
 
-        const [userOrders, total] = await Promise.all([
-            OrderModel.find({ userId })
-                .sort({ purchaseDate: -1 })
-                .skip(skip)
-                .limit(fetchLimit),
-            OrderModel.countDocuments({ userId }),
-        ]);
-
-        // Decrypt + filter Pakistani holder names
-        const filtered = userOrders
-            .map((order: { _id: { toString: () => string }; toObject: () => Record<string, unknown> }) => {
-                const data = order.toObject();
+        // ── Decrypt + filter Pakistani holder names ─────────────────────────
+        const filtered = allOrders
+            .map((order) => {
+                const data = order as Record<string, unknown>;
                 const decryptedHolder = decrypt(data.holder);
 
                 return {
-                    id: data._id?.toString() || order._id.toString(),
+                    id: data._id?.toString(),
                     userId: data.userId,
                     cardId: data.cardId,
                     cardTitle: data.cardTitle,
@@ -115,21 +107,26 @@ export async function GET(
                     ip: decrypt(data.ip),
                     videoLink: data.videoLink,
                     proxy: decrypt(data.proxy),
-                    price: data.price,
+                    price: typeof data.price === 'number' ? data.price : 0,
                     purchaseDate: data.purchaseDate,
                 };
             })
-            // Hide orders where holder name is Pakistani
             .filter(order => !hasPakistaniName(order.holder));
 
-        // Apply page slice
-        const formattedOrders = filtered.slice(0, limit);
+        // ── Aggregate totals BEFORE pagination ────────────────────────────
+        const totalCount = filtered.length;
+        const totalSpent = filtered.reduce((sum, o) => sum + (o.price || 0), 0);
+
+        // ── In-memory pagination (correct page slice) ─────────────────────
+        const startIdx = (page - 1) * limit;
+        const formattedOrders = filtered.slice(startIdx, startIdx + limit);
 
         return NextResponse.json({
             orders: formattedOrders,
+            totalSpent,                      // ← sum of ALL orders, not just this page
             pagination: {
-                total,
-                pages: Math.ceil(total / limit),
+                total: totalCount,
+                pages: Math.ceil(totalCount / limit),
                 current: page,
             },
         });

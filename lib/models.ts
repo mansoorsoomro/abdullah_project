@@ -334,14 +334,19 @@ BundleOrderSchema.index({ userId: 1, purchaseDate: -1 });
 export interface IOffer extends Document {
     title: string;
     description: string;
-    cardCount: number;
-    discount: number;          // percent e.g. 20
+    country: string;
+    state?: string;            // for proxies
+    type: 'CARD' | 'PROXY';
+    cardCount?: number;        // Optional if type is PROXY
+    proxyType?: string;        // e.g. "SOCKS5", "HTTP"
+    proxyFile?: string;        // URL to the PDF file
+    discount: number;
     originalPrice: number;
     price: number;
-    avgPricePerCard: number;
-    badge?: string;            // e.g. "BEST VALUE"
+    avgPricePerCard?: number;
+    badge?: string;
     isActive: boolean;
-    styleIndex: number;        // 0-5 for colour theme
+    styleIndex: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -349,17 +354,133 @@ export interface IOffer extends Document {
 const OfferSchema = new Schema<IOffer>({
     title: { type: String, required: true },
     description: { type: String, default: '' },
-    cardCount: { type: Number, required: true },
+    country: { type: String, required: true, default: 'USA' },
+    state: { type: String, default: '' },
+    type: { type: String, enum: ['CARD', 'PROXY'], default: 'CARD' },
+    cardCount: { type: Number, default: 0 },
+    proxyType: { type: String, default: '' },
+    proxyFile: { type: String, default: '' },
     discount: { type: Number, required: true },
     originalPrice: { type: Number, required: true },
     price: { type: Number, required: true },
-    avgPricePerCard: { type: Number, required: true },
+    avgPricePerCard: { type: Number, default: 0 },
     badge: { type: String, default: '' },
     isActive: { type: Boolean, default: true },
     styleIndex: { type: Number, default: 0 },
 }, { timestamps: true });
 
 OfferSchema.index({ isActive: 1, createdAt: -1 });
+
+// ─── OfferCard Schema — cards exclusively for offers ──────────────────
+export interface IOfferCard extends Document {
+    offerId: string;           // which offer this card belongs to
+    cardNumber: string;        // encrypted
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+    createdAt: Date;
+}
+
+const OfferCardSchema = new Schema<IOfferCard>({
+    offerId: { type: String, required: true, index: true },
+    cardNumber: { type: String, required: true },
+    cvv: String, expiry: String, holder: String,
+    address: String, bank: String, type: String,
+    zip: String, city: String, state: String, country: String,
+    ssn: String, dob: String, email: String, phone: String,
+    userAgent: String, password: String, ip: String,
+    videoLink: String, proxy: String,
+    createdAt: { type: Date, default: Date.now },
+});
+
+OfferCardSchema.index({ offerId: 1 });
+
+// ─── OfferOrder Schema — receipt when user buys an offer ──────────────
+export interface IOfferOrderCard {
+    cardNumber: string;
+    cvv?: string;
+    expiry?: string;
+    holder?: string;
+    address?: string;
+    bank?: string;
+    type?: string;
+    zip?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    ssn?: string;
+    dob?: string;
+    email?: string;
+    phone?: string;
+    userAgent?: string;
+    password?: string;
+    ip?: string;
+    videoLink?: string;
+    proxy?: string;
+}
+
+export interface IOfferOrder extends Document {
+    userId: string;
+    username: string;
+    offerId: string;
+    offerTitle: string;
+    offerCountry: string;
+    offerState?: string;
+    offerType: 'CARD' | 'PROXY';
+    cardCount: number;
+    proxyType?: string;
+    proxyFile?: string;
+    discount: number;
+    originalPrice: number;
+    price: number;
+    cards: IOfferOrderCard[];
+    purchaseDate: Date;
+}
+
+const OfferOrderCardSchema = new Schema<IOfferOrderCard>({
+    cardNumber: String, cvv: String, expiry: String, holder: String,
+    address: String, bank: String, type: String,
+    zip: String, city: String, state: String, country: String,
+    ssn: String, dob: String, email: String, phone: String,
+    userAgent: String, password: String, ip: String,
+    videoLink: String, proxy: String,
+}, { _id: false });
+
+const OfferOrderSchema = new Schema<IOfferOrder>({
+    userId: { type: String, required: true, index: true },
+    username: { type: String, required: true },
+    offerId: { type: String, required: true },
+    offerTitle: { type: String, required: true },
+    offerCountry: { type: String, required: true },
+    offerState: { type: String, default: '' },
+    offerType: { type: String, enum: ['CARD', 'PROXY'], default: 'CARD' },
+    cardCount: { type: Number, required: true },
+    proxyType: { type: String, default: '' },
+    proxyFile: { type: String, default: '' },
+    discount: { type: Number, required: true },
+    originalPrice: { type: Number, required: true },
+    price: { type: Number, required: true },
+    cards: { type: [OfferOrderCardSchema], default: [] },
+    purchaseDate: { type: Date, default: Date.now },
+});
+
+OfferOrderSchema.index({ userId: 1, purchaseDate: -1 });
 
 // Export Models (Safe Check)
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
@@ -369,6 +490,8 @@ export const Card = mongoose.models.Card || mongoose.model<ICard>('Card', CardSc
 export const ActivityLog = mongoose.models.ActivityLog || mongoose.model<IActivityLog>('ActivityLog', ActivityLogSchema);
 export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundleOrder>('BundleOrder', BundleOrderSchema);
 export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
+export const OfferCard = mongoose.models.OfferCard || mongoose.model<IOfferCard>('OfferCard', OfferCardSchema);
+export const OfferOrder = mongoose.models.OfferOrder || mongoose.model<IOfferOrder>('OfferOrder', OfferOrderSchema);
 
 // Setting Schema (global settings)
 export interface ISetting extends Document {

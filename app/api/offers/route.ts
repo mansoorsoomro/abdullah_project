@@ -1,41 +1,51 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../lib/db';
-import { Offer, Card } from '../../../lib/models';
-import type { Offer as OfferType } from '../../../types';
+import { Offer, OfferCard, IOffer } from '../../../lib/models';
 
-// GET /api/offers  →  returns active admin-created offers only.
-// No fallback — if admin hasn't created any offers, returns empty array.
+// GET /api/offers — active offers with live card count, grouped by country
 export async function GET() {
     try {
         await connectDB();
+        const dbOffers = await Offer.find({ isActive: true }).sort({ country: 1, createdAt: -1 }).lean();
 
-        // Fetch active offers from DB
-        const dbOffers = await Offer.find({ isActive: true }).sort({ createdAt: -1 });
+        const formatted = await Promise.all(
+            dbOffers.map(async (o) => {
+                const ot = o as unknown as IOffer;
 
-        // Market stats (for header display)
-        const availableCount = await Card.countDocuments({ forSale: true, price: { $gte: 500, $lte: 50000 } });
-        const priceAgg = await Card.aggregate([
-            { $match: { forSale: true, price: { $gte: 500, $lte: 50000 } } },
-            { $group: { _id: null, avgPrice: { $avg: '$price' } } }
-        ]);
-        const avgPrice: number = priceAgg.length > 0 ? parseFloat(priceAgg[0].avgPrice.toFixed(2)) : 0;
+                // For CARD types, count documents. For PROXY, use the stored count.
+                const type = ot.type || 'CARD';
+                const count = type === 'CARD'
+                    ? await OfferCard.countDocuments({ offerId: ot._id.toString() })
+                    : (ot.cardCount || 0);
 
-        const formatted = dbOffers.map((o: OfferType) => ({
-            _id: o._id.toString(),
-            id: o._id.toString(),
-            title: o.title,
-            description: o.description,
-            cardCount: o.cardCount,
-            discount: o.discount,
-            originalPrice: o.originalPrice,
-            price: o.price,
-            avgPricePerCard: o.avgPricePerCard,
-            badge: o.badge || '',
-            isActive: o.isActive,
-            styleIndex: o.styleIndex ?? 0,
-        }));
+                const avgPricePerCard = type === 'CARD' && count > 0
+                    ? parseFloat((ot.price / count).toFixed(2))
+                    : ot.avgPricePerCard || 0;
 
-        return NextResponse.json({ offers: formatted, availableCards: availableCount, avgCardPrice: avgPrice });
+                return {
+                    _id: ot._id.toString(),
+                    id: ot._id.toString(),
+                    title: ot.title,
+                    description: ot.description,
+                    country: ot.country || 'USA',
+                    state: ot.state || '',
+                    type,
+                    cardCount: count,
+                    proxyType: ot.proxyType || '',
+                    proxyFile: ot.proxyFile || '',
+                    discount: ot.discount,
+                    originalPrice: ot.originalPrice,
+                    price: ot.price,
+                    avgPricePerCard,
+                    badge: ot.badge || '',
+                    isActive: ot.isActive,
+                    styleIndex: ot.styleIndex ?? 0,
+                    createdAt: ot.createdAt,
+                };
+            })
+        );
+
+        return NextResponse.json({ offers: formatted });
     } catch (err) {
         console.error('Offers API error:', err);
         return NextResponse.json({ error: 'Server error' }, { status: 500 });

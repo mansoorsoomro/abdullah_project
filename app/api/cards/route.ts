@@ -4,10 +4,8 @@ import { Card as CardModel } from '../../../lib/models';
 import { decryptCardData } from '../../../lib/encryption';
 import type { Card } from '../../../types';
 
-// ── Pakistani / South-Asian name keywords (case-insensitive) ──────────────
-// If a cardholder name contains ANY of these tokens, the card is hidden.
+// ── Pakistani / South-Asian name tokens ───────────────────────────────────
 const PAKISTANI_NAME_TOKENS = [
-    // Very common Pakistani male names
     'muhammad', 'mohammed', 'mohammad', 'muhamad', 'muhammed',
     'ali', 'hassan', 'hussain', 'husain', 'hasan',
     'ahmed', 'ahmad', 'akhtar', 'akbar', 'anwar',
@@ -32,7 +30,7 @@ const PAKISTANI_NAME_TOKENS = [
     'waheed', 'waseem', 'waqar', 'waqas',
     'yasir', 'yousaf', 'yousuf', 'younas', 'zafar', 'zahid',
     'zain', 'zubair', 'zia',
-    // Very common Pakistani female names
+    // Female names
     'aisha', 'ayesha', 'amina', 'amna', 'asma',
     'bushra', 'fatima', 'fiza', 'fozia',
     'hina', 'huma', 'humaira',
@@ -44,15 +42,16 @@ const PAKISTANI_NAME_TOKENS = [
     'tabassum', 'tahira',
     'ume', 'ummah', 'uzma',
     'yasmeen', 'yasmin', 'zara', 'zainab', 'zubaida',
-    // Common Pakistani last names / family names
+    // Last names / family names
     'khan', 'malik', 'sheikh', 'chaudhry', 'chaudhary', 'choudhry',
     'qureshi', 'ansari', 'siddiqui', 'siddiqy', 'hashmi', 'bukhari',
     'mirza', 'baig', 'abbasi', 'rajput', 'bhatti', 'butt', 'rana',
     'javed', 'niazi', 'afridi', 'durrani', 'gilani', 'bhutto', 'zardari',
-    'nawaz', 'satti', 'gondal', 'bhatti', 'gujjar', 'lodhi',
+    'nawaz', 'satti', 'gondal', 'gujjar', 'lodhi',
+    // Additional from screenshots
+    'ullah', 'abdullah', 'dev',
 ];
 
-// Build one regex from all tokens for fast matching
 const PAKISTANI_REGEX = new RegExp(
     '\\b(' + PAKISTANI_NAME_TOKENS.join('|') + ')\\b',
     'i'
@@ -63,6 +62,13 @@ function hasPakistaniName(holder: string | undefined): boolean {
     return PAKISTANI_REGEX.test(holder.trim());
 }
 
+const maskCardNumber = (num: string) => {
+    if (!num) return 'XXXX XXXX XXXX XXXX';
+    const clean = num.replace(/\s+/g, '');
+    const bin = clean.slice(0, 6);
+    return bin.padEnd(clean.length, '*');
+};
+
 export async function GET(request: NextRequest) {
     try {
         await connectDB();
@@ -70,54 +76,42 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '9');
-        const skip = (page - 1) * limit;
 
-        // Fetch more cards than needed (2× limit) to compensate for post-decrypt filtering.
-        // Pakistani country filter is applied at DB level (fast), holder-name filter after decrypt.
+        // DB-level filter: forSale + exclude Pakistani country
         const baseFilter = {
             forSale: true,
-            country: { $not: { $regex: /^pakistan$/i } },   // DB-level: exclude Pakistani country
+            country: { $not: { $regex: /^pakistan$/i } },
         } as Record<string, unknown>;
 
-        // Fetch a larger batch so after name-filtering we still have enough for the page
-        const fetchLimit = limit * 4;
-        const cards = await CardModel.find(baseFilter)
+        // ── Fetch ALL matching cards from DB (no DB-level skip/limit) ──────
+        // We must filter by holder name AFTER decryption, so we can't rely on
+        // DB-level pagination — instead we paginate in memory after filtering.
+        const allCards = await CardModel.find(baseFilter)
             .sort({ createdAt: -1 })
-            .skip(skip * 4)           // rough skip — we'll paginate properly below
-            .limit(fetchLimit);
+            .lean();                          // lean() = faster plain objects
 
-        const total = await CardModel.countDocuments(baseFilter);
-
-        // ── Mask card number helper ───────────────────────────────────────
-        const maskCardNumber = (num: string) => {
-            if (!num) return 'XXXX XXXX XXXX XXXX';
-            const clean = num.replace(/\s+/g, '');
-            const bin = clean.slice(0, 6);
-            return bin.padEnd(clean.length, '*');
-        };
-
-        // ── Decrypt, filter Pakistani holder names, deduplicate ───────────
+        // ── Decrypt, filter Pakistani holder names, deduplicate ────────────
         const seen = new Set<string>();
         const filtered: object[] = [];
 
-        for (const card of cards) {
-            const decrypted = decryptCardData(card.toObject()) as Card;
+        for (const card of allCards) {
+            const decrypted = decryptCardData(card as Record<string, unknown>) as Card;
 
-            // Skip if cardholder name contains Pakistani tokens
+            // 1. Skip Pakistani holder names
             if (hasPakistaniName(decrypted.holder)) continue;
 
-            // Skip duplicates by raw card number
-            const key = decrypted.cardNumber || card._id.toString();
+            // 2. Skip duplicate card numbers
+            const key = decrypted.cardNumber || String(card._id);
             if (seen.has(key)) continue;
             seen.add(key);
 
             filtered.push({
-                id: card._id.toString(),
-                title: card.title,
-                price: card.price,
-                description: card.description,
-                forSale: card.forSale,
-                cardNumber: maskCardNumber(decrypted.cardNumber),
+                id: String(card._id),
+                title: (card as Record<string, unknown>).title,
+                price: (card as Record<string, unknown>).price,
+                description: (card as Record<string, unknown>).description,
+                forSale: (card as Record<string, unknown>).forSale,
+                cardNumber: maskCardNumber(decrypted.cardNumber ?? ''),
                 expiry: decrypted.expiry,
                 bank: decrypted.bank,
                 type: decrypted.type,
@@ -125,20 +119,22 @@ export async function GET(request: NextRequest) {
                 city: decrypted.city,
                 state: decrypted.state,
                 country: decrypted.country,
-                userAgent: decrypted.userAgent,
-                videoLink: decrypted.videoLink,
+                userAgent: (card as Record<string, unknown>).userAgent,
+                videoLink: (card as Record<string, unknown>).videoLink,
                 proxy: decrypted.proxy,
             });
         }
 
-        // Apply page slice on the filtered result
-        const formattedCards = filtered.slice(0, limit);
+        // ── In-memory pagination (correct page slice) ──────────────────────
+        const totalFiltered = filtered.length;
+        const startIdx = (page - 1) * limit;
+        const pageCards = filtered.slice(startIdx, startIdx + limit);
 
         return NextResponse.json({
-            cards: formattedCards,
+            cards: pageCards,
             pagination: {
-                total,
-                pages: Math.ceil(total / limit),
+                total: totalFiltered,
+                pages: Math.ceil(totalFiltered / limit),
                 current: page,
             },
         });
