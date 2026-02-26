@@ -482,6 +482,89 @@ const OfferOrderSchema = new Schema<IOfferOrder>({
 
 OfferOrderSchema.index({ userId: 1, purchaseDate: -1 });
 
+// ─── Proxy Schema (for single proxies) ────────────────────────────────
+export interface IProxy extends Document {
+    title: string;
+    price: number;
+    description: string;
+    forSale: boolean;
+    host: string;
+    port: string;
+    username?: string;
+    password?: string;
+    type: string; // HTTP, SOCKS4, SOCKS5
+    country: string;
+    state?: string;
+    city?: string;
+    createdAt: Date;
+    soldToUsername?: string;
+    soldToEmail?: string;
+    soldAt?: Date;
+    pdfUrl?: string;
+}
+
+const ProxySchema = new Schema<IProxy>({
+    title: { type: String, required: true },
+    price: { type: Number, required: true },
+    description: { type: String, default: '' },
+    forSale: { type: Boolean, default: true },
+    host: { type: String, required: true },
+    port: { type: String, required: true },
+    username: { type: String, default: '' },
+    password: { type: String, default: '' },
+    type: { type: String, default: 'SOCKS5' },
+    country: { type: String, required: true },
+    state: { type: String, default: '' },
+    city: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now },
+    soldToUsername: String,
+    soldToEmail: String,
+    soldAt: Date,
+    pdfUrl: String,
+});
+
+ProxySchema.index({ forSale: 1, createdAt: -1 });
+ProxySchema.index({ country: 1 });
+
+// ─── ProxyOrder Schema — receipt when user buys a proxy ───────────────
+export interface IProxyOrder extends Document {
+    userId: string;
+    username: string;
+    proxyId: string;
+    proxyTitle: string;
+    host: string;
+    port: string;
+    username_proxy?: string;
+    password_proxy?: string;
+    type: string;
+    country: string;
+    state?: string;
+    city?: string;
+    price: number;
+    purchaseDate: Date;
+    pdfUrl?: string;
+}
+
+const ProxyOrderSchema = new Schema<IProxyOrder>({
+    userId: { type: String, required: true, index: true },
+    username: { type: String, required: true },
+    proxyId: { type: String, required: true },
+    proxyTitle: { type: String, required: true },
+    host: { type: String, required: true },
+    port: { type: String, required: true },
+    username_proxy: String,
+    password_proxy: String,
+    type: { type: String, required: true },
+    country: { type: String, required: true },
+    state: String,
+    city: String,
+    price: { type: Number, required: true },
+    purchaseDate: { type: Date, default: Date.now },
+    pdfUrl: String,
+});
+
+ProxyOrderSchema.index({ userId: 1, purchaseDate: -1 });
+
 // Export Models (Safe Check)
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 export const Payment = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema);
@@ -492,6 +575,8 @@ export const BundleOrder = mongoose.models.BundleOrder || mongoose.model<IBundle
 export const Offer = mongoose.models.Offer || mongoose.model<IOffer>('Offer', OfferSchema);
 export const OfferCard = mongoose.models.OfferCard || mongoose.model<IOfferCard>('OfferCard', OfferCardSchema);
 export const OfferOrder = mongoose.models.OfferOrder || mongoose.model<IOfferOrder>('OfferOrder', OfferOrderSchema);
+export const Proxy = mongoose.models.Proxy || mongoose.model<IProxy>('Proxy', ProxySchema);
+export const ProxyOrder = mongoose.models.ProxyOrder || mongoose.model<IProxyOrder>('ProxyOrder', ProxyOrderSchema);
 
 // Setting Schema (global settings)
 export interface ISetting extends Document {

@@ -117,3 +117,30 @@ export function decryptCardData(cardData: Record<string, unknown> & { toObject?:
         type: data.type ? decrypt(data.type) : undefined,
     };
 }
+
+/**
+ * Encrypt proxy data before saving to database
+ */
+export function encryptProxyData(proxyData: Record<string, unknown> & { host?: string, port?: string, username?: string, password?: string, pdfUrl?: string }) {
+    return {
+        ...proxyData,
+        host: proxyData.host ? encrypt(proxyData.host) : '',
+        port: proxyData.port ? encrypt(proxyData.port) : '',
+        username: proxyData.username ? encrypt(proxyData.username) : '',
+        password: proxyData.password ? encrypt(proxyData.password) : '',
+    };
+}
+
+/**
+ * Decrypt proxy data after fetching from database
+ */
+export function decryptProxyData(proxyData: Record<string, unknown> & { toObject?: () => Record<string, unknown>, host?: string, port?: string, username?: string, password?: string, pdfUrl?: string }) {
+    const data = proxyData.toObject ? proxyData.toObject() : proxyData;
+    return {
+        ...data,
+        host: data.host ? decrypt(data.host) : '',
+        port: data.port ? decrypt(data.port) : '',
+        username: data.username ? decrypt(data.username) : '',
+        password: data.password ? decrypt(data.password) : '',
+    };
+}

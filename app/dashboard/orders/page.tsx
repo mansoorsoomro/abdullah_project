@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Order, User, BundleOrder, OfferOrder } from '../../../types';
-import { Package, CheckCircle, Percent, Gift, Server, Database } from 'lucide-react';
+import type { Order, User, BundleOrder, OfferOrder, ProxyOrder } from '../../../types';
+import { Package, CheckCircle, Percent, Gift, Server, Database, Globe } from 'lucide-react';
 
 interface Payment {
     _id: string;
@@ -15,8 +15,9 @@ interface Payment {
 }
 
 export default function Orders() {
-    const [activeTab, setActiveTab] = useState<'purchases' | 'bundles' | 'deposits'>('purchases');
+    const [activeTab, setActiveTab] = useState<'purchases' | 'proxies' | 'bundles' | 'deposits'>('purchases');
     const [orders, setOrders] = useState<Order[]>([]);
+    const [proxyOrders, setProxyOrders] = useState<ProxyOrder[]>([]);
     const [payments, setPayments] = useState<Payment[]>([]);
     const [bundleOrders, setBundleOrders] = useState<BundleOrder[]>([]);
     const [offerOrders, setOfferOrders] = useState<OfferOrder[]>([]);
@@ -24,12 +25,15 @@ export default function Orders() {
     const [user, setUser] = useState<User | null>(null);
 
     const [purchasesPage, setPurchasesPage] = useState(1);
+    const [proxiesPage, setProxiesPage] = useState(1);
     const [depositsPage, setDepositsPage] = useState(1);
     const [bundlesPage, setBundlesPage] = useState(1);
     const [totalPurchasesPages, setTotalPurchasesPages] = useState(1);
+    const [totalProxiesPages, setTotalProxiesPages] = useState(1);
     const [totalDepositsPages, setTotalDepositsPages] = useState(1);
     const [totalBundlesPages, setTotalBundlesPages] = useState(1);
     const [totalPurchases, setTotalPurchases] = useState(0);
+    const [totalProxies, setTotalProxies] = useState(0);
     const itemsPerPage = 9;
 
     useEffect(() => {
@@ -38,6 +42,7 @@ export default function Orders() {
             const parsedUser = JSON.parse(userData);
             setUser(parsedUser);
             fetchOrders(parsedUser.id, purchasesPage);
+            fetchProxyOrders(parsedUser.id, proxiesPage);
             fetchPayments(parsedUser.id, depositsPage);
             fetchBundleOrders(parsedUser.id, bundlesPage);
         } else {
@@ -47,17 +52,28 @@ export default function Orders() {
     }, []);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { if (user) fetchOrders(user.id, purchasesPage); }, [purchasesPage]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { if (user) fetchPayments(user.id, depositsPage); }, [depositsPage]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { if (user) fetchBundleOrders(user.id, bundlesPage); }, [bundlesPage]);
+    useEffect(() => { if (user) fetchOrders(user.id, purchasesPage); }, [purchasesPage, user]);
+    useEffect(() => { if (user) fetchProxyOrders(user.id, proxiesPage); }, [proxiesPage, user]);
+    useEffect(() => { if (user) fetchPayments(user.id, depositsPage); }, [depositsPage, user]);
+    useEffect(() => { if (user) fetchBundleOrders(user.id, bundlesPage); }, [bundlesPage, user]);
 
     useEffect(() => {
         if (user) {
             fetchOfferOrders(user.id);
         }
     }, [user]);
+
+    const fetchProxyOrders = async (userId: string, page: number) => {
+        try {
+            const res = await fetch(`/api/proxy-orders/${userId}?page=${page}&limit=${itemsPerPage}`);
+            const data = await res.json();
+            setProxyOrders(data.orders || []);
+            if (data.pagination) {
+                setTotalProxiesPages(data.pagination.pages);
+                setTotalProxies(data.pagination.total);
+            }
+        } catch (e) { console.error(e); }
+    };
 
     const fetchOrders = async (userId: string, page: number) => {
         try {
@@ -145,28 +161,29 @@ export default function Orders() {
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
                         <span className="text-xs text-gray-500 font-bold block">TOTAL SPENT</span>
                         <span className="text-(--accent) font-black text-lg">
-                            ${(orders.reduce((s, o) => s + o.price, 0) + bundleOrders.reduce((s, b) => s + b.price, 0) + offerOrders.reduce((s, o) => s + o.price, 0)).toLocaleString()}
+                            ${(orders.reduce((s, o) => s + (o.price || 0), 0) + proxyOrders.reduce((s, p) => s + (p.price || 0), 0) + bundleOrders.reduce((s, b) => s + (b.price || 0), 0) + offerOrders.reduce((s, o) => s + (o.price || 0), 0)).toLocaleString()}
                         </span>
                     </div>
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
-                        <span className="text-xs text-gray-500 font-bold block">TOTAL ORDERS (THIS PAGE)</span>
-                        <span className="text-white font-black text-lg">{orders.length + bundleOrders.length + offerOrders.length}</span>
+                        <span className="text-xs text-gray-500 font-bold block">TOTAL ASSETS</span>
+                        <span className="text-white font-black text-lg">{totalPurchases + totalProxies + bundleOrders.length + offerOrders.length}</span>
                     </div>
                     <div className="bg-[#111] border border-[#333] px-4 py-2 rounded-lg" style={{ padding: '20px' }}>
-                        <span className="text-xs text-gray-500 font-bold block">CARDS PURCHASED</span>
-                        <span className="text-white font-black text-lg">{totalPurchases + offerOrders.reduce((s, o) => s + o.cardCount, 0)}</span>
+                        <span className="text-xs text-gray-500 font-bold block">PROXIES SECURED</span>
+                        <span className="text-white font-black text-lg">{totalProxies + offerOrders.filter(o => o.offerType === 'PROXY').length}</span>
                     </div>
                 </div>
             </motion.div>
 
             {/* Tabs */}
             <div className="flex gap-1 mb-6 border-b border-[#333]">
-                {(['purchases', 'bundles', 'deposits'] as const).map(tab => (
+                {(['purchases', 'proxies', 'bundles', 'deposits'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-6 py-3 text-sm font-bold tracking-wide transition-all relative ${activeTab === tab ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}>
-                        {tab === 'purchases' ? `PURCHASES (${totalPurchases})`
-                            : tab === 'bundles' ? `BUNDLES (${bundleOrders.length + offerOrders.length})`
-                                : 'DEPOSITS'}
+                        {tab === 'purchases' ? `CARDS (${totalPurchases})`
+                            : tab === 'proxies' ? `PROXIES (${totalProxies + offerOrders.filter(o => o.offerType === 'PROXY').length})`
+                                : tab === 'bundles' ? `BUNDLES (${bundleOrders.length + offerOrders.filter(o => o.offerType === 'CARD').length})`
+                                    : 'DEPOSITS'}
                         {activeTab === tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 right-0 h-0.5 bg-(--accent)" />}
                     </button>
                 ))}
@@ -252,6 +269,162 @@ export default function Orders() {
                     </motion.div>
                 )}
 
+                {/* ── PROXIES TAB ── */}
+                {activeTab === 'proxies' && (
+                    <motion.div key="proxies" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr">
+                            {/* Standalone proxies */}
+                            {proxyOrders.map((pOrder, index) => (
+                                <motion.div key={pOrder.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="bg-[#0a0a0a] border border-blue-900/30 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col group hover:border-blue-500 transition-all duration-300 h-full">
+                                    <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none"></div>
+                                    <div className="h-1.5 w-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]"></div>
+
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Globe className="w-3 h-3 text-blue-500" />
+                                                        <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{pOrder.country}</span>
+                                                    </div>
+                                                    <h3 className="text-white font-black italic tracking-wider text-xl leading-tight uppercase">{pOrder.proxyTitle}</h3>
+                                                    <p className="text-[10px] text-gray-500 font-mono mt-1 uppercase">NODE_ID: {pOrder.id.slice(-8)}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-white font-black text-xl leading-none">${pOrder.price}</div>
+                                                    <div className="text-[10px] text-gray-600 font-bold uppercase mt-1 tracking-widest">PAID</div>
+                                                </div>
+                                            </div>
+
+                                            {/* Proxy Credentials Node */}
+                                            <div className="bg-black/60 border border-white/5 rounded-xl p-5 space-y-4 group-hover:border-blue-500/20 transition-colors">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Entry Node</p>
+                                                        <div className="flex justify-between items-center bg-white/5 p-2 rounded border border-white/5">
+                                                            <span className="text-xs font-mono font-bold text-white">{pOrder.host}</span>
+                                                            <span className="text-xs font-mono font-bold text-blue-500">{pOrder.port}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Username</p>
+                                                            <p className="text-xs font-mono font-bold text-gray-300 truncate bg-white/5 p-2 rounded border border-white/5">{pOrder.username_proxy || 'N/A'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[8px] text-gray-600 uppercase font-black mb-1">Password</p>
+                                                            <p className="text-xs font-mono font-bold text-blue-500 truncate bg-white/5 p-2 rounded border border-blue-500/20">{pOrder.password_proxy || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {pOrder.pdfUrl ? (
+                                                    <a
+                                                        href={pOrder.pdfUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full py-3 bg-blue-600/10 border border-blue-500/30 rounded-lg text-blue-400 font-black text-[10px] tracking-widest uppercase hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2 group/btn shadow-[0_0_15px_rgba(37,99,235,0.1)]"
+                                                    >
+                                                        <Database className="w-4 h-4" />
+                                                        DOWNLOAD DOCUMENTATION
+                                                    </a>
+                                                ) : (
+                                                    <div className="w-full py-3 bg-white/5 border border-white/10 rounded-lg text-gray-600 font-black text-[9px] tracking-widest uppercase flex items-center justify-center gap-2 cursor-not-allowed">
+                                                        <Database className="w-3.5 h-3.5 opacity-30" />
+                                                        NO MANUAL ATTACHED
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-bold">
+                                            <span className="text-gray-600 font-mono uppercase italic">{pOrder.type} PROTOCOL</span>
+                                            <span className="text-green-500 uppercase tracking-widest flex items-center gap-1">
+                                                <CheckCircle size={10} /> ENCRYPTED_STABLE
+                                            </span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+
+                            {/* Proxy Offer orders */}
+                            {offerOrders.filter(o => o.offerType === 'PROXY').map((oo, ooIdx) => (
+                                <motion.div key={oo._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: ooIdx * 0.1 }}
+                                    className="bg-[#0a0a0a] border border-blue-500/30 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(37,99,235,0.1)] relative flex flex-col group hover:border-blue-500/60 transition-all duration-300 h-full">
+                                    <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none"></div>
+                                    <div className="h-1.5 w-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]"></div>
+
+                                    <div className="p-6 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-6">
+                                                <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                                                    <Server className="w-5 h-5 text-blue-400" />
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-white font-black text-xl leading-none">${oo.price}</div>
+                                                    <div className="text-[10px] text-gray-600 font-bold uppercase mt-1 tracking-widest">OFFER PAID</div>
+                                                </div>
+                                            </div>
+
+                                            <h3 className="text-xl font-black text-white italic tracking-wide mb-1 uppercase leading-tight">
+                                                {oo.offerTitle}
+                                            </h3>
+                                            <p className="text-[10px] text-gray-500 font-mono mb-6 tracking-widest">
+                                                {oo.cardCount} NODES UNLOCKED · {oo.offerCountry}
+                                            </p>
+
+                                            <div className="space-y-4 border-t border-gray-900 pt-6">
+                                                <div className="flex justify-between items-center bg-white/5 p-3 rounded-lg border border-white/5">
+                                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">{oo.proxyType || 'SOCKS5'}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                                        <span className="text-[10px] text-green-500 font-black uppercase">Active Nodes</span>
+                                                    </div>
+                                                </div>
+
+                                                {oo.proxyFile ? (
+                                                    <a
+                                                        href={oo.proxyFile}
+                                                        download
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-full py-4 bg-blue-600/20 border border-blue-500/50 text-blue-400 font-black text-[11px] tracking-[0.2em] uppercase rounded-xl hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,99,235,0.15)]"
+                                                    >
+                                                        <Database className="w-4 h-4" />
+                                                        DOWNLOAD NODES LIST (PDF)
+                                                    </a>
+                                                ) : (
+                                                    <div className="w-full py-4 bg-white/5 border border-white/10 text-gray-600 font-black text-[10px] tracking-[0.2em] uppercase rounded-xl flex items-center justify-center gap-3 cursor-not-allowed">
+                                                        <Database className="w-4 h-4 opacity-30" />
+                                                        SETUP FILES NOT ATTACHED
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-bold">
+                                            <span className="text-gray-600 font-mono uppercase italic">PURCHASED: {new Date(oo.createdAt || oo.purchaseDate).toLocaleDateString()}</span>
+                                            <span className="text-blue-500 uppercase tracking-widest flex items-center gap-1">
+                                                <Package size={10} /> BULK_PROVISION
+                                            </span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+
+                            {proxyOrders.length === 0 && offerOrders.filter(o => o.offerType === 'PROXY').length === 0 && (
+                                <div className="text-center py-20 text-gray-500 col-span-full">
+                                    <p className="font-mono tracking-widest uppercase">No purchased proxies found</p>
+                                    <p className="text-gray-700 text-[10px] mt-2">Any proxies you purchase will appear here for management.</p>
+                                </div>
+                            )}
+                        </div>
+                        {renderPagination(proxiesPage, totalProxiesPages, setProxiesPage)}
+                    </motion.div>
+                )}
+
                 {/* ── BUNDLES TAB ── */}
                 {activeTab === 'bundles' && (
                     <motion.div key="bundles" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="flex flex-col gap-8">
@@ -307,8 +480,8 @@ export default function Orders() {
                         )}
                         {renderPagination(bundlesPage, totalBundlesPages, setBundlesPage)}
 
-                        {/* Offer orders — purchased from Offers page */}
-                        {offerOrders.length > 0 && (
+                        {/* Offer orders — purchased from Offers page (ONLY CARD OFFERS HERE) */}
+                        {offerOrders.filter(o => o.offerType === 'CARD').length > 0 && (
                             <div className="flex flex-col gap-4">
                                 {bundleOrders.length > 0 && (
                                     <div className="flex items-center gap-3">
@@ -317,16 +490,16 @@ export default function Orders() {
                                         <div className="h-px flex-1 bg-gray-800" />
                                     </div>
                                 )}
-                                {offerOrders.map((oo, ooIdx) => (
+                                {offerOrders.filter(o => o.offerType === 'CARD').map((oo, ooIdx) => (
                                     <motion.div key={oo._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: ooIdx * 0.06 }}
-                                        className={`bg-[#0a0a0a] border ${oo.offerType === 'PROXY' ? 'border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.1)]' : 'border-gray-800'} rounded-2xl overflow-hidden shadow-lg relative`}>
+                                        className={`bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden shadow-lg relative`}>
                                         <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
-                                        <div className={`h-1.5 w-full ${oo.offerType === 'PROXY' ? 'bg-blue-600' : 'bg-linear-to-r from-(--accent) to-yellow-500'} shadow-[0_0_10px_rgba(255,0,51,0.4)]`} />
+                                        <div className={`h-1.5 w-full bg-linear-to-r from-(--accent) to-yellow-500 shadow-[0_0_10px_rgba(255,0,51,0.4)]`} />
 
                                         <div className="p-6 relative z-10">
                                             <div className="flex justify-between items-start mb-4">
-                                                <div className={`p-2.5 ${oo.offerType === 'PROXY' ? 'bg-blue-500/10 border-blue-500/20' : 'bg-(--accent)/10 border-(--accent)/20'} border rounded-xl`}>
-                                                    {oo.offerType === 'PROXY' ? <Server className="w-5 h-5 text-blue-400" /> : <Gift className="w-5 h-5 text-(--accent)" />}
+                                                <div className={`p-2.5 bg-(--accent)/10 border-(--accent)/20 border rounded-xl`}>
+                                                    <Gift className="w-5 h-5 text-(--accent)" />
                                                 </div>
                                                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-900/10 border border-green-800/30 rounded text-[10px] font-black text-green-400">
                                                     <CheckCircle className="w-3 h-3" />
@@ -339,7 +512,7 @@ export default function Orders() {
                                                     {oo.offerTitle}
                                                 </h3>
                                                 <p className="text-xs text-gray-400 font-mono mb-4 uppercase tracking-widest">
-                                                    {oo.offerType === 'PROXY' ? `${oo.cardCount} PROXIES` : `${oo.cardCount} CARDS BUNDLE`} · {new Date(oo.createdAt || oo.purchaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    {oo.cardCount} CARDS BUNDLE · {new Date(oo.createdAt || oo.purchaseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                 </p>
                                             </div>
 
@@ -349,22 +522,9 @@ export default function Orders() {
                                                     <span className="text-white font-black text-lg">${oo.price.toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-gray-500 font-mono text-xs">USDT</span></span>
                                                 </div>
 
-                                                {oo.offerType === 'PROXY' && oo.proxyFile ? (
-                                                    <a
-                                                        href={oo.proxyFile}
-                                                        download
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="w-full py-3 bg-blue-600/20 border border-blue-500/50 text-blue-400 font-black text-[10px] tracking-[0.2em] uppercase rounded-lg hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-2"
-                                                    >
-                                                        <Database className="w-3.5 h-3.5" />
-                                                        DOWNLOAD PROXY PDF
-                                                    </a>
-                                                ) : oo.offerType === 'CARD' ? (
-                                                    <div className="p-3 bg-white/5 border border-white/10 rounded-lg text-center">
-                                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">View in History for Details</p>
-                                                    </div>
-                                                ) : null}
+                                                <div className="p-3 bg-white/5 border border-white/10 rounded-lg text-center">
+                                                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">View in History for Details</p>
+                                                </div>
 
                                                 <div className="flex items-center gap-2 p-2 bg-green-900/5 border border-green-800/20 rounded text-[10px] text-green-500 font-bold uppercase tracking-widest">
                                                     <CheckCircle className="w-3.5 h-3.5 shrink-0" />
@@ -374,6 +534,13 @@ export default function Orders() {
                                         </div>
                                     </motion.div>
                                 ))}
+                            </div>
+                        )}
+
+                        {bundleOrders.length === 0 && offerOrders.filter(o => o.offerType === 'CARD').length === 0 && (
+                            <div className="text-center py-20 text-gray-500 col-span-full">
+                                <p className="font-mono tracking-widest uppercase italic">No bundle assets detected</p>
+                                <p className="text-gray-700 text-[10px] mt-2 tracking-widest">Explore our exclusive bundle offers to secure high-value assets.</p>
                             </div>
                         )}
 

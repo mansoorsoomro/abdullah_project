@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import type { Payment, Card, Order, User, ActivityLog, BundleOrder, Offer } from '../../../types';
+import type { Payment, Card, Order, User, ActivityLog, BundleOrder, Offer, Proxy } from '../../../types';
 import { NotificationToast, ConfirmDialog, type NotifState, type ConfirmState } from '../../components/NotificationToast';
 import AdminGridBackground from '../../theme/AdminGridBackground';
 import {
     Trash2, Edit, Key, UserX,
     Activity, DollarSign,
     Users, CreditCard, ShoppingCart, AlertTriangle,
-    CheckCircle, Search, X, Server, Globe, Settings
+    CheckCircle, Search, X, Server, Globe, Settings, FileText
 } from 'lucide-react';
 
 interface OfferFormState {
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
     const [approving, setApproving] = useState<string | null>(null);
     const [showAddCard, setShowAddCard] = useState(false);
     const [users, setUsers] = useState<User[]>([]);
-    const [activeTab, setActiveTab] = useState<'payments' | 'cards' | 'orders' | 'users' | 'bundles' | 'offers' | 'settings'>('payments');
+    const [activeTab, setActiveTab] = useState<'payments' | 'cards' | 'orders' | 'users' | 'bundles' | 'offers' | 'settings' | 'proxies'>('payments');
     const [orders, setOrders] = useState<Order[]>([]);
     const [bundleOrders, setBundleOrders] = useState<BundleOrder[]>([]);
     const [adminOffers, setAdminOffers] = useState<Offer[]>([]);
@@ -59,6 +59,45 @@ export default function AdminDashboard() {
     const [cardsPage, setCardsPage] = useState(1);
     const cardsPerPage = 9;
     const [cardsSearch, setCardsSearch] = useState('');
+
+    const [proxies, setProxies] = useState<Proxy[]>([]);
+    const [showAddProxy, setShowAddProxy] = useState(false);
+    const [editingProxy, setEditingProxy] = useState<Proxy | null>(null);
+    const [proxiesPage, setProxiesPage] = useState(1);
+    const [proxiesSearch, setProxiesSearch] = useState('');
+    const proxiesPerPage = 9;
+    const [newProxy, setNewProxy] = useState({
+        title: '', price: '', description: '',
+        host: '', port: '', username: '', password: '',
+        type: 'SOCKS5', country: 'USA', state: '', city: '',
+        pdfUrl: ''
+    });
+
+    const handleSingleProxyUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setProxyUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await fetch('/api/admin/proxy-upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                if (isEdit) {
+                    if (editingProxy) setEditingProxy({ ...editingProxy, pdfUrl: data.url });
+                } else {
+                    setNewProxy(prev => ({ ...prev, pdfUrl: data.url }));
+                }
+                showNotification('✓ PDF uploaded successfully', 'success');
+            } else {
+                showNotification(data.error || 'Upload failed', 'error');
+            }
+        } catch {
+            showNotification('Upload failed', 'error');
+        } finally {
+            setProxyUploading(false);
+        }
+    };
 
     // Activity Logs
     const [userLogs, setUserLogs] = useState<ActivityLog[]>([]);
@@ -176,6 +215,7 @@ export default function AdminDashboard() {
         fetchBundleOrders();
         fetchAdminOffers();
         fetchSettings();
+        fetchProxies();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [router]);
 
@@ -227,6 +267,82 @@ export default function AdminDashboard() {
         } catch (error) {
             console.error('Failed to fetch cards:', error);
         }
+    };
+
+    const fetchProxies = async () => {
+        try {
+            const response = await fetch('/api/admin/proxies', { cache: 'no-store' });
+            const data = await response.json();
+            setProxies(data.proxies || []);
+        } catch (error) {
+            console.error('Failed to fetch proxies:', error);
+        }
+    };
+
+    const handleAddProxy = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/admin/proxies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...newProxy,
+                    price: parseFloat(newProxy.price),
+                    forSale: true
+                }),
+            });
+
+            if (response.ok) {
+                showNotification('✓ Proxy added successfully!', 'success');
+                setShowAddProxy(false);
+                setNewProxy({
+                    title: '', price: '', description: '',
+                    host: '', port: '', username: '', password: '',
+                    type: 'SOCKS5', country: 'USA', state: '', city: '',
+                    pdfUrl: ''
+                });
+                fetchProxies();
+                setProxiesPage(1);
+            } else {
+                const data = await response.json();
+                showNotification(`Error: ${data.error}`, 'error');
+            }
+        } catch {
+            showNotification('Failed to add proxy.', 'error');
+        }
+    };
+
+    const handleDeleteProxy = async (id: string) => {
+        showConfirm({
+            title: 'Delete Proxy?',
+            message: 'This will permanently remove this proxy from inventory.',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/admin/proxies/${id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        showNotification('✓ Proxy deleted', 'success');
+                        fetchProxies();
+                    }
+                } catch { showNotification('Delete failed', 'error'); }
+            }
+        });
+    };
+
+    const handleUpdateProxy = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingProxy) return;
+        try {
+            const res = await fetch(`/api/admin/proxies/${editingProxy.id || (editingProxy as { _id?: string })._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingProxy)
+            });
+            if (res.ok) {
+                showNotification('✓ Proxy updated', 'success');
+                setEditingProxy(null);
+                fetchProxies();
+            }
+        } catch { showNotification('Update failed', 'error'); }
     };
 
     const fetchOrders = async () => {
@@ -773,9 +889,13 @@ export default function AdminDashboard() {
     };
 
     // Calculate Dashboard Stats
-    const totalRevenue = orders.reduce((sum, order) => sum + (order.price || 0), 0);
+    const totalRevenue = [
+        ...orders,
+        ...bundleOrders
+    ].reduce((sum, order) => sum + (Number(order.price) || 0), 0);
     const totalUsers = users.length;
     const activeCards = cards.filter(c => c.forSale).length;
+    const activeProxies = proxies.filter(p => p.forSale).length;
 
     const handleLogout = () => {
         localStorage.removeItem('adminAuth');
@@ -795,6 +915,7 @@ export default function AdminDashboard() {
 
 
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const formatCardNumber = (num: string) => {
         if (!num) return 'XXXX XXXX XXXX XXXX';
         const clean = num.replace(/\s+/g, '');
@@ -1113,6 +1234,16 @@ export default function AdminDashboard() {
                     >
                         <span className="block skew-x-12 relative z-10">CARD INVENTORY</span>
                         {activeTab !== 'cards' && <div className="absolute inset-0 bg-(--accent)/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('proxies')}
+                        className={`px-8 py-3 text-sm font-black tracking-widest transition-all -skew-x-12 border-2 uppercase relative overflow-hidden group min-w-max ${activeTab === 'proxies'
+                            ? 'bg-(--accent) text-black border-(--accent) shadow-[0_0_20px_var(--accent)] scale-105'
+                            : 'bg-black/50 text-gray-500 border-gray-800 hover:border-(--accent) hover:text-(--accent) hover:shadow-[0_0_10px_rgba(255,0,51,0.3)]'
+                            }`}
+                    >
+                        <span className="block skew-x-12 relative z-10">PROXY INVENTORY</span>
+                        {activeTab !== 'proxies' && <div className="absolute inset-0 bg-(--accent)/10 translate-y-full group-hover:translate-y-0 transition-transform"></div>}
                     </button>
                     <button
                         onClick={() => setActiveTab('orders')}
@@ -1977,6 +2108,315 @@ export default function AdminDashboard() {
                     </motion.div>
                 )}
 
+                {/* Proxies Management Tab */}
+                {activeTab === 'proxies' && (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                    >
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-4 border-b border-gray-800">
+                            <div className="flex flex-col gap-1">
+                                <h2 className="text-2xl font-black tracking-widest text-white flex items-center gap-3">
+                                    PROXY INVENTORY <span className="text-(--accent) text-lg align-top">({proxies.length})</span>
+                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={fetchProxies}
+                                        className="text-[9px] font-black text-gray-500 hover:text-(--accent) transition-colors tracking-widest uppercase flex items-center gap-1"
+                                    >
+                                        <Activity className="w-3 h-3" /> REFRESH DATA
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+                                <div className="relative group flex-1 md:flex-initial min-w-[200px]">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-(--accent) transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="SEARCH PROXIES..."
+                                        className="w-full bg-[#0a0a0a] border border-gray-800 py-2.5 pl-10 pr-4 rounded text-xs font-bold text-white focus:border-(--accent) outline-none transition-all tracking-widest"
+                                        onChange={(e) => {
+                                            const term = e.target.value.toLowerCase();
+                                            setProxiesSearch(term);
+                                            setProxiesPage(1);
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setShowAddProxy(!showAddProxy)}
+                                    className="px-6 py-2.5 text-xs font-black tracking-widest transition-all duration-300 -skew-x-12 border-2 border-(--accent) bg-(--accent) text-black hover:bg-black hover:text-(--accent) shadow-[0_0_15px_var(--accent)]"
+                                >
+                                    <span className="block skew-x-12">{showAddProxy ? 'CANCEL' : '+ ADD NEW PROXY'}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Add Proxy Form */}
+                        <AnimatePresence>
+                            {showAddProxy && (
+                                <motion.form
+                                    initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    onSubmit={handleAddProxy}
+                                    className="bg-[#050505]/90 backdrop-blur-xl border border-(--accent) p-10 rounded-2xl mb-12 shadow-[0_0_50px_rgba(220,38,38,0.15)] relative overflow-hidden"
+                                >
+                                    <h3 className="text-2xl font-black text-white mb-10 tracking-widest flex items-center gap-4 border-b border-white/5 pb-6">
+                                        <span className="w-10 h-10 rounded bg-(--accent) text-black flex items-center justify-center shadow-[0_0_15px_var(--accent)]">+</span>
+                                        PROVISION NEW PROXY
+                                    </h3>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Proxy Title</label>
+                                            <input type="text" placeholder="US Residential SOCKS5" value={newProxy.title} onChange={(e) => setNewProxy({ ...newProxy, title: e.target.value })} className="cyber-input py-3 px-4" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Price (USDT)</label>
+                                            <input type="number" step="0.01" placeholder="5.00" value={newProxy.price} onChange={(e) => setNewProxy({ ...newProxy, price: e.target.value })} className="cyber-input py-3 px-4" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Protocol</label>
+                                            <select value={newProxy.type} onChange={(e) => setNewProxy({ ...newProxy, type: e.target.value })} className="cyber-input py-3 px-4 bg-black">
+                                                <option value="SOCKS5">SOCKS5</option>
+                                                <option value="SOCKS4">SOCKS4</option>
+                                                <option value="HTTP">HTTP</option>
+                                                <option value="HTTPS">HTTPS</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Host / IP</label>
+                                            <input type="text" placeholder="127.0.0.1" value={newProxy.host} onChange={(e) => setNewProxy({ ...newProxy, host: e.target.value })} className="cyber-input py-3 px-4 font-mono" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Port</label>
+                                            <input type="text" placeholder="8080" value={newProxy.port} onChange={(e) => setNewProxy({ ...newProxy, port: e.target.value })} className="cyber-input py-3 px-4 font-mono" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Country</label>
+                                            <input type="text" placeholder="USA" value={newProxy.country} onChange={(e) => setNewProxy({ ...newProxy, country: e.target.value })} className="cyber-input py-3 px-4 uppercase" required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Username</label>
+                                            <input type="text" placeholder="optional" value={newProxy.username} onChange={(e) => setNewProxy({ ...newProxy, username: e.target.value })} className="cyber-input py-3 px-4" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Password</label>
+                                            <input type="text" placeholder="optional" value={newProxy.password} onChange={(e) => setNewProxy({ ...newProxy, password: e.target.value })} className="cyber-input py-3 px-4" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">State/City</label>
+                                            <div className="flex gap-2">
+                                                <input type="text" placeholder="State" value={newProxy.state} onChange={(e) => setNewProxy({ ...newProxy, state: e.target.value })} className="cyber-input py-3 px-4 flex-1" />
+                                                <input type="text" placeholder="City" value={newProxy.city} onChange={(e) => setNewProxy({ ...newProxy, city: e.target.value })} className="cyber-input py-3 px-4 flex-1" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold tracking-widest uppercase text-(--accent)">Proxy Documentation (PDF)</label>
+                                            <div className="relative group">
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf"
+                                                    onChange={(e) => handleSingleProxyUpload(e)}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                    disabled={proxyUploading}
+                                                />
+                                                <div className={`cyber-input py-3 px-4 flex items-center justify-between transition-all ${newProxy.pdfUrl ? 'border-green-500/50 bg-green-500/5' : 'hover:border-(--accent)/50'}`}>
+                                                    <span className={`text-[10px] font-black tracking-widest uppercase transition-colors ${newProxy.pdfUrl ? 'text-green-500' : 'text-gray-500 group-hover:text-white'}`}>
+                                                        {proxyUploading ? 'UPLOADING...' : (newProxy.pdfUrl ? '✓ DOCUMENT ATTACHED' : 'UPLOAD PDF GUIDE')}
+                                                    </span>
+                                                    {newProxy.pdfUrl ? <CheckCircle className="w-4 h-4 text-green-500" /> : <ShoppingCart className="w-4 h-4 text-gray-700 group-hover:text-(--accent) group-hover:rotate-12 transition-all" />}
+                                                </div>
+                                            </div>
+                                            {newProxy.pdfUrl && <p className="text-[8px] text-gray-600 font-mono truncate">{newProxy.pdfUrl}</p>}
+                                        </div>
+                                    </div>
+                                    <div className="mt-8 flex justify-end">
+                                        <button type="submit" className="px-12 py-4 bg-(--accent) text-black font-black -skew-x-12 hover:bg-white transition-all shadow-[0_0_20px_var(--accent)]">
+                                            <span className="block skew-x-12 uppercase tracking-widest">DEPLOY PROXY</span>
+                                        </button>
+                                    </div>
+                                </motion.form>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Edit Proxy Modal */}
+                        <AnimatePresence>
+                            {editingProxy && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                                    <motion.form
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        onSubmit={handleUpdateProxy}
+                                        className="bg-[#0a0a0a] border-2 border-(--accent)/50 p-8 rounded-2xl w-full max-w-2xl shadow-2xl space-y-6"
+                                    >
+                                        <h3 className="text-xl font-black text-white tracking-widest border-b border-white/5 pb-4 uppercase">
+                                            EDIT PROXY: <span className="text-(--accent)">{editingProxy.title}</span>
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] text-gray-500 font-bold uppercase">Title</label>
+                                                <input type="text" value={editingProxy.title} onChange={(e) => setEditingProxy({ ...editingProxy, title: e.target.value })} className="cyber-input px-4 py-2" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] text-gray-500 font-bold uppercase">Price</label>
+                                                <input type="number" value={editingProxy.price} onChange={(e) => setEditingProxy({ ...editingProxy, price: parseFloat(e.target.value) })} className="cyber-input px-4 py-2" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] text-gray-500 font-bold uppercase">Host</label>
+                                                <input type="text" value={editingProxy.host} onChange={(e) => setEditingProxy({ ...editingProxy, host: e.target.value })} className="cyber-input px-4 py-2 font-mono" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] text-gray-500 font-bold uppercase">Port</label>
+                                                <input type="text" value={editingProxy.port} onChange={(e) => setEditingProxy({ ...editingProxy, port: e.target.value })} className="cyber-input px-4 py-2 font-mono" />
+                                            </div>
+                                            <div className="space-y-2 col-span-2">
+                                                <label className="text-[10px] font-bold uppercase text-(--accent)">Documentation (PDF)</label>
+                                                <div className="relative group">
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf"
+                                                        onChange={(e) => handleSingleProxyUpload(e, true)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                        disabled={proxyUploading}
+                                                    />
+                                                    <div className={`cyber-input py-2 px-4 flex items-center justify-between transition-all ${editingProxy.pdfUrl ? 'border-green-500/50 bg-green-500/5' : 'hover:border-(--accent)/50'}`}>
+                                                        <span className={`text-[10px] font-black tracking-widest uppercase transition-colors ${editingProxy.pdfUrl ? 'text-green-500' : 'text-gray-500 group-hover:text-white'}`}>
+                                                            {proxyUploading ? 'UPLOADING...' : (editingProxy.pdfUrl ? '✓ PDF ATTACHED' : 'UPLOAD NEW PDF')}
+                                                        </span>
+                                                        {editingProxy.pdfUrl ? <CheckCircle className="w-4 h-4 text-green-500" /> : <ShoppingCart className="w-4 h-4 text-gray-700" />}
+                                                    </div>
+                                                </div>
+                                                {editingProxy.pdfUrl && <p className="text-[8px] text-gray-600 font-mono truncate">{editingProxy.pdfUrl}</p>}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <button type="button" onClick={() => setEditingProxy(null)} className="flex-1 py-3 bg-gray-900 text-gray-400 font-bold rounded uppercase">Cancel</button>
+                                            <button type="submit" className="flex-1 py-3 bg-(--accent) text-black font-black rounded uppercase shadow-[0_0_15px_var(--accent)]">Save Changes</button>
+                                        </div>
+                                    </motion.form>
+                                </div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Proxies List */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {(() => {
+                                const filtered = proxies.filter(p =>
+                                    (p.title || '').toLowerCase().includes(proxiesSearch) ||
+                                    (p.country || '').toLowerCase().includes(proxiesSearch) ||
+                                    (p.host || '').toLowerCase().includes(proxiesSearch) ||
+                                    (p.type || '').toLowerCase().includes(proxiesSearch)
+                                );
+                                return filtered.slice((proxiesPage - 1) * proxiesPerPage, proxiesPage * proxiesPerPage)
+                                    .map((proxy, index) => (
+                                        <motion.div
+                                            key={proxy.id}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className="group h-[260px] perspective-1000"
+                                        >
+                                            <motion.div className="relative w-full h-full transform-3d" whileHover={{ rotateY: 180 }}>
+                                                {/* FRONT */}
+                                                <div className="absolute inset-0 backface-hidden z-10">
+                                                    <div className={`h-full w-full rounded-2xl overflow-hidden relative border border-white/10 flex flex-col justify-between bg-linear-to-br from-[#121212] to-[#050505] inset-shadow-sm ${!proxy.forSale ? 'grayscale opacity-60' : ''}`}>
+                                                        <div className="p-5 flex justify-between items-start">
+                                                            <div>
+                                                                <span className="text-[9px] font-black text-(--accent) tracking-widest uppercase">{proxy.type}</span>
+                                                                <h4 className="text-sm font-black text-white truncate max-w-[150px] uppercase">{proxy.title}</h4>
+                                                            </div>
+                                                            <div className="bg-green-500/10 border border-green-500/30 px-3 py-1 rounded text-xs font-black text-green-500">
+                                                                {proxy.price} USDT
+                                                            </div>
+                                                        </div>
+                                                        <div className="px-5">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Globe className="w-4 h-4 text-gray-600" />
+                                                                    <span className="text-xs font-black text-white/80 uppercase">{proxy.country}</span>
+                                                                </div>
+                                                                {proxy.pdfUrl && <span className="text-[8px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 flex items-center gap-1 font-black"><FileText className="w-2.5 h-2.5" /> PDF_ATTACHED</span>}
+                                                            </div>
+                                                            <p className="text-lg font-mono font-bold text-gray-400">
+                                                                {proxy.host.substring(0, 10)}... : {proxy.port}
+                                                            </p>
+                                                        </div>
+                                                        <div className="p-5 bg-black/40 border-t border-white/5 flex justify-between items-center">
+                                                            <span className="text-[8px] text-gray-600 font-bold uppercase">{proxy.city || 'GLOBAL NODE'}</span>
+                                                            {!proxy.forSale && <span className="text-[9px] font-black text-red-600">SOLD</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* BACK */}
+                                                <div className="absolute inset-0 backface-hidden transform-[rotateY(180deg)] z-20">
+                                                    <div className="h-full w-full rounded-2xl bg-[#0a0a0a] border-2 border-(--accent)/30 p-6 flex flex-col items-center justify-center gap-4">
+                                                        <div className="w-full space-y-3">
+                                                            <div className="bg-white/5 p-2 rounded border border-white/5">
+                                                                <p className="text-[8px] text-gray-500 uppercase">Username</p>
+                                                                <p className="text-[10px] text-white font-mono">{proxy.username || 'NONE'}</p>
+                                                            </div>
+                                                            <div className="bg-white/5 p-2 rounded border border-white/5">
+                                                                <p className="text-[8px] text-gray-500 uppercase">Password</p>
+                                                                <p className="text-[10px] text-white font-mono">{proxy.password || 'NONE'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col gap-2 w-full mt-auto">
+                                                            {proxy.pdfUrl && (
+                                                                <a href={proxy.pdfUrl} target="_blank" rel="noopener noreferrer" className="w-full py-2 bg-green-600/20 border border-green-600/30 text-green-500 text-[10px] font-black uppercase rounded hover:bg-green-600 hover:text-white transition-all flex items-center justify-center gap-2 mb-1">
+                                                                    <FileText className="w-3 h-3" /> View Manual
+                                                                </a>
+                                                            )}
+                                                            <div className="flex gap-2 w-full">
+                                                                <button onClick={() => { setEditingProxy(proxy); }} className="flex-1 py-2 bg-blue-600/20 border border-blue-600/30 text-blue-400 text-[10px] font-black uppercase rounded hover:bg-blue-600 hover:text-white transition-all">Edit</button>
+                                                                <button onClick={() => handleDeleteProxy(proxy.id!)} className="flex-1 py-2 bg-red-600/20 border border-red-600/30 text-red-500 text-[10px] font-black uppercase rounded hover:bg-red-600 hover:text-white transition-all">Purge</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        </motion.div>
+                                    ));
+                            })()}
+                        </div>
+
+                        {/* Proxy Pagination */}
+                        {(() => {
+                            const filteredCount = proxies.filter(p =>
+                                (p.title || '').toLowerCase().includes(proxiesSearch) ||
+                                (p.country || '').toLowerCase().includes(proxiesSearch) ||
+                                (p.host || '').toLowerCase().includes(proxiesSearch)
+                            ).length;
+                            if (filteredCount <= proxiesPerPage) return null;
+                            return (
+                                <div className="mt-8 flex justify-center gap-2 pb-8">
+                                    <button onClick={() => setProxiesPage(p => Math.max(1, p - 1))} disabled={proxiesPage === 1} className="px-6 py-2 bg-[#1a1a1a] text-gray-400 rounded-lg disabled:opacity-50 hover:bg-(--accent) hover:text-black transition-all text-xs font-black tracking-widest -skew-x-12">
+                                        <span className="block skew-x-12">PREV</span>
+                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {Array.from({ length: Math.ceil(filteredCount / proxiesPerPage) }, (_, i) => i + 1).map(pageNum => (
+                                            <button key={pageNum} onClick={() => setProxiesPage(pageNum)} className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-black transition-all -skew-x-12 ${proxiesPage === pageNum ? 'bg-(--accent) text-black shadow-[0_0_15px_var(--accent)]' : 'bg-[#1a1a1a] text-gray-400 hover:text-white'}`}>
+                                                <span className="block skew-x-12">{pageNum}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => setProxiesPage(p => Math.min(Math.ceil(filteredCount / proxiesPerPage), p + 1))} disabled={proxiesPage === Math.ceil(filteredCount / proxiesPerPage)} className="px-6 py-2 bg-[#1a1a1a] text-gray-400 rounded-lg disabled:opacity-50 hover:bg-(--accent) hover:text-black transition-all text-xs font-black tracking-widest -skew-x-12">
+                                        <span className="block skew-x-12">NEXT</span>
+                                    </button>
+                                </div>
+                            );
+                        })()}
+
+                        {proxies.length === 0 && !showAddProxy && (
+                            <div className="p-12 border border-dashed border-(--border) rounded-lg text-center bg-(--bg-secondary)/50">
+                                <p className="text-gray-500 font-mono tracking-widest uppercase">DATABASE EMPTY - NO PROXIES FOUND</p>
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+
                 {/* Orders Tab */}
                 {activeTab === 'orders' && (
                     <motion.div
@@ -2756,7 +3196,7 @@ export default function AdminDashboard() {
                             {managingOffer && (
                                 <motion.div
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                    className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+                                    className="fixed inset-0 z-99999 bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
                                     onClick={() => { setManagingOffer(null); setShowAddCardForm(false); }}
                                 >
                                     <motion.div

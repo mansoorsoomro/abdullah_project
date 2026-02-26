@@ -66,7 +66,7 @@ export interface Order {
     ip?: string;
     videoLink?: string;
     proxy?: string;
-    purchaserName?: string;
+    purchaserUsername?: string;
     purchaserEmail?: string;
     price: number;
     purchaseDate: Date | string;
@@ -198,4 +198,46 @@ export interface OfferOrder {
     cards: OfferOrderCard[];
     purchaseDate: Date | string;
     createdAt: Date | string;
+}
+
+export interface Proxy {
+    _id?: string;
+    id: string;
+    title: string;
+    price: number;
+    description: string;
+    forSale: boolean;
+    host: string;
+    port: string;
+    username?: string;
+    password?: string;
+    type: string;
+    country: string;
+    state?: string;
+    city?: string;
+    createdAt?: Date | string;
+    soldToUsername?: string;
+    soldToEmail?: string;
+    soldAt?: Date | string;
+    pdfUrl?: string;
+}
+
+export interface ProxyOrder {
+    _id?: string;
+    id: string;
+    userId: string;
+    username: string;
+    proxyId: string;
+    proxyTitle: string;
+    host: string;
+    port: string;
+    username_proxy?: string;
+    password_proxy?: string;
+    type: string;
+    country: string;
+    state?: string;
+    city?: string;
+    price: number;
+    purchaseDate: Date | string;
+    pdfUrl?: string;
 }
